@@ -1,46 +1,149 @@
-# Live Sketchbook V0
+# Jungle Sketchbook
 
-A minimal home prototype inspired by the architecture of the open-source **Paper Aquarium** project: paper coloring → photo → rectified page → masked child artwork → live animated display.
+A local, browser-based prototype inspired by museum coloring installations and
+the open-source Paper Aquarium architecture:
 
-## Run
+**printed coloring sheet → phone photo → corrected page → child artwork cutout → animated TV display**
 
-Requires Node 18+ and no npm install.
+The first milestone is intentionally narrow: one lion, manual corner selection,
+a deterministic mask, and a simple paper-cutout animation. This proves the full
+home-network pipeline before we invest in automatic scanning and articulated
+animal rigs.
+
+## Current status
+
+V0 supports:
+
+- A printable A4 lion coloring sheet with four distinct corner markers
+- Photo selection directly from a phone camera or photo library
+- Manual TL → TR → BR → BL corner registration
+- Perspective correction using a projective homography
+- A predefined lion silhouette that preserves the child's exact pixels
+- Live delivery from the capture device to every open display
+- Foreground → midground → background aging and eventual removal
+- Multiple capture/display devices on the same home network
+
+The server uses only Node's standard library. There is no install or build step.
+
+Run the automated server/API smoke test with:
+
+```bash
+node test/smoke.js
+```
+
+## Requirements
+
+- Node.js 18 or newer
+- A computer that stays on while the experience is running
+- A phone/tablet and display device on the same local network
+- A modern browser with Canvas, `fetch`, and Server-Sent Events support
+
+## Quick start
 
 ```bash
 node server.js
 ```
 
-Then open:
+The terminal prints a localhost URL and, when available, one or more LAN URLs:
 
-- `http://localhost:8000/` — launcher
-- `/capture.html` — capture station
-- `/display.html` — safari wall
-- `/animals/lion/template.svg` — printable lion sheet
+```text
+Live Sketchbook V0: http://localhost:8000
+LAN: http://192.168.1.50:8000
+```
 
-The server prints LAN URLs so another computer/TV on the same Wi-Fi can open the display.
+Open these pages:
 
-## V0 flow
+| Page | Purpose |
+| --- | --- |
+| `/` | Launcher and links |
+| `/animals/lion/template.svg` | Printable lion sheet |
+| `/capture.html` | Phone/tablet capture station |
+| `/display.html` | Fullscreen safari display |
 
-1. Print the lion sheet.
-2. Color it and take a photo of the whole page.
-3. In Capture, choose the photo and tap TL → TR → BR → BL page corners.
-4. Pure JavaScript computes a homography and perspective-corrects the page to an A4 canvas.
-5. A predefined lion contour masks everything outside the animal.
-6. The transparent PNG is POSTed to the local Node server.
-7. The display receives it immediately over Server-Sent Events.
-8. The lion crosses the screen and ages through foreground → midground → background layers.
+### Try the complete flow
 
-## Why manual corners first?
+1. Open the lion template and print it at actual size on A4 or US Letter.
+2. Color the lion while leaving all four corner markers visible.
+3. Open `/display.html` on the display computer or TV browser.
+4. Open `/capture.html` using the server's LAN URL on the phone.
+5. Take or select a photo containing the entire sheet.
+6. Tap the page corners in this order: TL → TR → BR → BL.
+7. Select **Cut out lion**, inspect the previews, and select **Send to safari**.
 
-Paper Aquarium automatically recognizes encoded corner markers. V0 intentionally keeps registration manual so we can validate the entire end-to-end system before adding computer-vision marker detection. The sheet already has four unique corner markers so V1 can automate capture without changing the paper.
+The display receives the PNG immediately. A new lion starts large in the
+foreground, later moves to smaller depth lanes, and eventually leaves the scene.
 
-## Next milestones
+## Home deployment options
 
-- Automatic marker recognition / auto-capture
-- White-balance and color correction
-- Remove/suppress printed gray guide lines
-- Real skeletal/deformable 2D walk animation
-- Five species
-- Persistent saved drawings
-- Better jungle art, ambient audio, fullscreen kiosk mode
-- New-arrival spotlight, then depth-layer aging
+For development, run the server and display browser on the same Mac and connect
+it to the Sony Bravia over HDMI. The capture phone can be anywhere on the same
+Wi-Fi.
+
+The intended finished setup keeps the server elsewhere in the house. The Bravia
+loads the display over the network using either:
+
+1. An Android TV browser
+2. A small sideloaded Android TV WebView app
+3. An HDMI-connected computer or Raspberry Pi as a fallback
+
+The Android TV app should remain a thin fullscreen client. Image processing,
+state, and rendering continue to live in this web project.
+
+## Project structure
+
+```text
+server.js                         Local HTTP, API, and event server
+ARCHITECTURE.md                   Design, data flow, and roadmap
+public/index.html                 Launcher
+public/capture.html               Capture interface
+public/capture.js                 Homography, mask, and upload pipeline
+public/display.html               Fullscreen safari canvas
+public/display.js                 Scene and animal lifecycle
+public/styles.css                 Launcher/capture styles
+public/animals/lion/template.svg  Printable sheet and source geometry
+test/smoke.js                     Dependency-free server/API smoke test
+```
+
+## API
+
+| Method | Route | Description |
+| --- | --- | --- |
+| `GET` | `/api/animals` | Return up to 20 recent in-memory animals |
+| `POST` | `/api/animals` | Accept `{ species, texture }` and broadcast it |
+| `GET` | `/api/events` | Server-Sent Events stream for displays |
+| `POST` | `/api/clear` | Clear all in-memory animals and displays |
+
+`texture` is a PNG data URL. Uploads are capped at 5 MB and the server retains a
+maximum of 30 animals. Data is currently held in memory and disappears whenever
+the server restarts.
+
+## Important V0 limitations
+
+- One animal species and one fixed silhouette
+- Manual page-corner selection
+- Simplified paper-cutout motion rather than a skeletal walk cycle
+- No persistent storage, authentication, or access control
+- Intended only for a trusted home LAN; do not expose this server to the internet
+- The printed guide lines remain visible in the extracted artwork
+
+## Troubleshooting
+
+- Make sure the phone and server are on the same Wi-Fi and not a guest network.
+- Allow incoming Node connections if macOS asks about firewall access.
+- Use the printed numeric LAN URL if a `.local` hostname does not resolve.
+- Keep all four markers and the full edge of the paper visible in the photo.
+- If the preview twists, reset and tap the corners in the required order.
+- If no LAN URL prints, find the Mac's local IP in Network settings and append
+  `:8000`; the server still listens on all network interfaces.
+
+## Roadmap
+
+1. Automatic corner-marker recognition, stability detection, and auto-capture
+2. White-balance/color correction and printed-guide suppression
+3. A deformable 2D lion mesh with a reusable walk cycle
+4. Fox, zebra, elephant, and gazelle templates/rigs
+5. Persistent drawings, scene controls, sound, and improved jungle artwork
+6. Fullscreen kiosk behavior and a sideloaded Sony Android TV client
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the validated system design, risks,
+and the recommended order of implementation.

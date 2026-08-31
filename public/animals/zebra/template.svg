@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 840 1188">
+  <rect width="840" height="1188" fill="white"/>
+  <style>
+    .outline { fill: white; stroke: #666; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    .detail { fill: none; stroke: #999; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .marker { fill: #111; }
+    text { font-family: Arial, sans-serif; fill: #555; }
+  </style>
+
+  <rect class="marker" x="36" y="36" width="54" height="54"/>
+  <rect fill="white" x="48" y="48" width="30" height="30"/>
+  <rect class="marker" x="750" y="36" width="54" height="54"/>
+  <circle fill="white" cx="777" cy="63" r="15"/>
+  <rect class="marker" x="750" y="1098" width="54" height="54"/>
+  <path fill="white" d="M765 1137l12-25 12 25z"/>
+  <rect class="marker" x="36" y="1098" width="54" height="54"/>
+  <path fill="white" d="M48 1110h30v30H48z M54 1116h18v18H54z" fill-rule="evenodd"/>
+
+  <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — ZEBRA</text>
+  <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the zebra. Leave the corner markers visible.</text>
+
+  <path class="outline" data-mask-part="body" d="M265 510
+    C360 480 500 490 590 535
+    C625 575 625 645 590 685
+    C565 705 535 715 505 715
+    L500 845 L455 845 L440 710
+    L335 710 L320 845 L275 845 L270 690
+    C245 650 240 555 265 510 Z"/>
+  <path class="outline" data-mask-part="neck-head" d="M565 545
+    C565 485 580 425 610 380
+    L590 330 L625 345
+    C655 325 690 342 705 375
+    C720 410 700 440 670 455
+    C660 500 650 550 635 595
+    C615 610 580 585 565 545 Z"/>
+  <path class="outline" data-mask-part="left-ear" d="M585 345 L575 285 L615 330 Z"/>
+  <path class="outline" data-mask-part="right-ear" d="M625 338 L655 285 L660 350 Z"/>
+  <path class="outline" data-mask-part="tail" d="M275 535 C235 525 205 545 180 575 L190 595 C220 570 245 565 275 575 Z"/>
+
+  <circle cx="670" cy="382" r="7" fill="#777"/>
+  <path class="detail" d="M690 410 C680 425 667 430 650 427"/>
+  <path class="detail" d="M600 380 C575 420 575 475 585 520"/>
+  <path class="detail" d="M335 710 L340 610 M440 710 L445 610"/>
+  <path class="detail" d="M278 824 L315 824 M458 824 L495 824"/>
+  <path class="detail" d="M300 505 L335 565 M355 493 L385 560 M420 490 L445 565"/>
+  <path class="detail" d="M485 500 L505 570 M545 515 L560 575"/>
+  <path class="detail" d="M590 470 L625 490 M595 425 L635 450 M608 385 L650 410"/>
+  <path class="detail" d="M590 350 L605 370 M585 375 L600 395 M580 405 L595 425"/>
+  <path class="detail" d="M273 585 L330 610 M270 630 L330 650 M275 675 L330 685"/>
+  <path class="detail" d="M455 600 L515 620 M450 650 L515 670 M462 700 L500 710"/>
+
+  <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">V0 prototype — manual corner selection</text>
+</svg>

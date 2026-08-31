@@ -5,7 +5,7 @@ the open-source Paper Aquarium architecture:
 
 **printed coloring sheet → phone photo → corrected page → child artwork cutout → animated TV display**
 
-The first milestone is intentionally narrow: lion and fox templates, manual
+The first milestone is intentionally narrow: four animal templates, manual
 corner selection, deterministic masks, and simple paper-cutout animation. This
 proves the full home-network pipeline before we invest in automatic scanning and
 articulated animal rigs.
@@ -14,7 +14,7 @@ articulated animal rigs.
 
 V0 supports:
 
-- Printable A4 lion and fox coloring sheets with four distinct corner markers
+- Printable A4 lion, fox, zebra, and gazelle sheets with four corner markers
 - Photo selection directly from a phone camera or photo library
 - Manual TL → TR → BR → BL corner registration
 - Perspective correction using a projective homography
@@ -31,6 +31,8 @@ Run the small test suite with:
 node test/geometry.js
 node test/lion-mask.js
 node test/fox-mask.js
+node test/zebra-mask.js
+node test/gazelle-mask.js
 node test/smoke.js
 ```
 
@@ -65,8 +67,12 @@ Open these pages:
 | `/` | Launcher and links |
 | `/animals/lion/template.svg` | Printable lion sheet |
 | `/animals/fox/template.svg` | Printable fox sheet |
+| `/animals/zebra/template.svg` | Printable zebra sheet |
+| `/animals/gazelle/template.svg` | Printable gazelle sheet |
 | `/capture.html?species=lion` | Lion capture station |
 | `/capture.html?species=fox` | Fox capture station |
+| `/capture.html?species=zebra` | Zebra capture station |
+| `/capture.html?species=gazelle` | Gazelle capture station |
 | `/display.html` | Fullscreen safari display |
 
 ### Try the complete flow
@@ -114,10 +120,14 @@ public/animals/lion/template.svg  Printable sheet and source geometry
 public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
 public/animals/fox/template.svg   Printable fox sheet and source geometry
 public/animals/fox/shape.js       Shared fox extraction mask and crop bounds
+public/animals/zebra/             Zebra template and shape module
+public/animals/gazelle/           Gazelle template and shape module
 test/smoke.js                     Dependency-free server/API smoke test
 test/geometry.js                  Focused image-geometry unit tests
 test/lion-mask.js                 Template/mask consistency test
 test/fox-mask.js                  Fox template/mask consistency test
+test/zebra-mask.js                Zebra template/mask consistency test
+test/gazelle-mask.js              Gazelle template/mask consistency test
 ```
 
 ## API
@@ -135,7 +145,7 @@ the server restarts.
 
 ## Important V0 limitations
 
-- Two animal species with fixed silhouettes
+- Four animal species with fixed silhouettes
 - Manual page-corner selection
 - Simplified paper-cutout motion rather than a skeletal walk cycle
 - No persistent storage, authentication, or access control
@@ -157,7 +167,7 @@ the server restarts.
 1. Automatic corner-marker recognition, stability detection, and auto-capture
 2. White-balance/color correction and printed-guide suppression
 3. A deformable 2D lion mesh with a reusable walk cycle
-4. Zebra, elephant, and gazelle templates/rigs
+4. Rhino and elephant templates, then species-specific rigs
 5. Persistent drawings, scene controls, sound, and improved jungle artwork
 6. Fullscreen kiosk behavior and a sideloaded Sony Android TV client
 

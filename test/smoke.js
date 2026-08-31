@@ -48,6 +48,8 @@ async function run() {
     '/display.html',
     '/animals/lion/template.svg',
     '/animals/fox/template.svg',
+    '/animals/zebra/template.svg',
+    '/animals/gazelle/template.svg',
   ]) {
     const response = await fetch(`${baseUrl}${pathname}`);
     assert.equal(response.status, 200, `${pathname} should load`);
@@ -67,30 +69,23 @@ async function run() {
 
   const onePixelPng =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-  response = await fetch(`${baseUrl}/api/animals`, {
-    body: JSON.stringify({ species: 'lion', texture: onePixelPng }),
-    headers: { 'Content-Type': 'application/json' },
-    method: 'POST',
-  });
-  assert.equal(response.status, 201, 'valid lion should be accepted');
+  const supportedSpecies = ['lion', 'fox', 'zebra', 'gazelle'];
+  for (const species of supportedSpecies) {
+    response = await fetch(`${baseUrl}/api/animals`, {
+      body: JSON.stringify({ species, texture: onePixelPng }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    });
+    assert.equal(response.status, 201, `valid ${species} should be accepted`);
+  }
 
   response = await fetch(`${baseUrl}/api/animals`);
   const animals = await response.json();
-  assert.equal(animals.length, 1);
-  assert.equal(animals[0].species, 'lion');
-  assert.ok(animals[0].id);
-
-  response = await fetch(`${baseUrl}/api/animals`, {
-    body: JSON.stringify({ species: 'fox', texture: onePixelPng }),
-    headers: { 'Content-Type': 'application/json' },
-    method: 'POST',
-  });
-  assert.equal(response.status, 201, 'valid fox should be accepted');
-
-  response = await fetch(`${baseUrl}/api/animals`);
-  const animalsWithFox = await response.json();
-  assert.equal(animalsWithFox.length, 2);
-  assert.equal(animalsWithFox[1].species, 'fox');
+  assert.deepEqual(
+    animals.map((animal) => animal.species),
+    supportedSpecies,
+  );
+  assert.ok(animals.every((animal) => animal.id));
 
   response = await fetch(`${baseUrl}/api/clear`, { method: 'POST' });
   assert.equal(response.status, 200);

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 840 1188">
+  <rect width="840" height="1188" fill="white"/>
+  <style>
+    .outline { fill: white; stroke: #666; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    .detail { fill: none; stroke: #999; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .marker { fill: #111; }
+    text { font-family: Arial, sans-serif; fill: #555; }
+  </style>
+
+  <rect class="marker" x="36" y="36" width="54" height="54"/>
+  <rect fill="white" x="48" y="48" width="30" height="30"/>
+  <rect class="marker" x="750" y="36" width="54" height="54"/>
+  <circle fill="white" cx="777" cy="63" r="15"/>
+  <rect class="marker" x="750" y="1098" width="54" height="54"/>
+  <path fill="white" d="M765 1137l12-25 12 25z"/>
+  <rect class="marker" x="36" y="1098" width="54" height="54"/>
+  <path fill="white" d="M48 1110h30v30H48z M54 1116h18v18H54z" fill-rule="evenodd"/>
+
+  <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — GAZELLE</text>
+  <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the gazelle. Leave the corner markers visible.</text>
+
+  <path class="outline" data-mask-part="body" d="M300 535
+    C380 510 515 515 600 550
+    C625 580 625 630 600 660
+    C575 680 550 688 525 690
+    L520 850 L485 850 L470 685
+    L365 685 L350 850 L315 850 L310 675
+    C285 640 278 570 300 535 Z"/>
+  <path class="outline" data-mask-part="neck-head" d="M300 555
+    C275 515 265 465 275 415
+    C280 380 265 350 235 335
+    C205 320 175 335 160 365
+    C175 392 205 402 238 392
+    C255 450 258 515 265 580
+    C275 610 305 595 300 555 Z"/>
+  <path class="outline" data-mask-part="left-ear" d="M195 342 L175 300 L215 330 Z"/>
+  <path class="outline" data-mask-part="right-ear" d="M225 337 L250 300 L245 350 Z"/>
+  <path class="outline" data-mask-part="left-horn" d="M210 330 C195 275 195 235 210 205 L220 210 C215 250 220 285 230 325 Z"/>
+  <path class="outline" data-mask-part="right-horn" d="M230 328 C230 270 242 230 265 205 L274 214 C250 252 248 290 250 335 Z"/>
+  <path class="outline" data-mask-part="tail" d="M590 560 C635 545 665 555 690 580 L680 600 C650 580 625 580 595 595 Z"/>
+
+  <circle cx="205" cy="360" r="7" fill="#777"/>
+  <ellipse cx="168" cy="372" rx="8" ry="6" fill="#888"/>
+  <path class="detail" d="M230 392 C245 450 250 510 270 560"/>
+  <path class="detail" d="M365 685 L372 595 M470 685 L478 595"/>
+  <path class="detail" d="M318 830 L347 830 M488 830 L517 830"/>
+  <path class="detail" d="M330 535 C360 575 365 630 350 675"/>
+  <path class="detail" d="M290 620 C380 655 505 655 600 620"/>
+  <path class="detail" d="M207 282 L222 280 M205 250 L217 248 M240 285 L255 290 M245 250 L262 258"/>
+
+  <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">V0 prototype — manual corner selection</text>
+</svg>

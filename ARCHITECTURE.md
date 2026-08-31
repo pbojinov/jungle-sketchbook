@@ -118,7 +118,9 @@ on-disk directory containing PNG files plus metadata.
 - Assigns scale, speed, and vertical lane based on age.
 - Reconnects automatically through the browser's EventSource implementation.
 
-Canvas 2D is enough to validate the experience. A future deformable animal can
+The background uses layered trunks, fronds, colored glows, and fireflies to echo
+the gallery's luminous teal-and-purple jungle while keeping submitted drawings
+visually dominant. Canvas 2D is enough to validate the experience. A future deformable animal can
 use Three.js, PixiJS, or another WebGL renderer while keeping the API unchanged.
 
 ## State model
@@ -207,7 +209,7 @@ Exit criterion: the child's exact lion visibly walks rather than sliding/bobbing
 
 ### Milestone 3 — content expansion (started)
 
-- Add lion and fox templates, followed by zebra, elephant, and gazelle
+- Add lion, fox, zebra, and gazelle templates, followed by rhino and elephant
 - Move species geometry and behavior into data files
 - Add per-species scale, speed, lane, and animation settings
 

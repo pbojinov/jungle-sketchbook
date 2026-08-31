@@ -25,11 +25,17 @@ V0 supports:
 
 The server uses only Node's standard library. There is no install or build step.
 
-Run the automated server/API smoke test with:
+Run the small test suite with:
 
 ```bash
+node test/geometry.js
+node test/lion-mask.js
 node test/smoke.js
 ```
+
+These tests cover the homography/corner math and the server/API contract. Full
+browser automation and visual snapshot tests are intentionally deferred until
+the interaction and art direction stabilize.
 
 ## Requirements
 
@@ -96,12 +102,16 @@ server.js                         Local HTTP, API, and event server
 ARCHITECTURE.md                   Design, data flow, and roadmap
 public/index.html                 Launcher
 public/capture.html               Capture interface
-public/capture.js                 Homography, mask, and upload pipeline
+public/geometry.js                Tested homography and corner-validation math
+public/capture.js                 Photo, lion mask, and upload pipeline
 public/display.html               Fullscreen safari canvas
 public/display.js                 Scene and animal lifecycle
 public/styles.css                 Launcher/capture styles
 public/animals/lion/template.svg  Printable sheet and source geometry
+public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
 test/smoke.js                     Dependency-free server/API smoke test
+test/geometry.js                  Focused image-geometry unit tests
+test/lion-mask.js                 Template/mask consistency test
 ```
 
 ## API

@@ -76,7 +76,10 @@ That work should begin only after automatic capture is reliable.
 
 ### Capture client
 
-`public/capture.js` uses browser Canvas APIs and no external dependencies.
+`public/capture.js` uses browser Canvas APIs and no external dependencies. The
+pure geometry functions live in `public/geometry.js` so the transform math can
+be tested without a browser. The lion silhouette and crop bounds live in
+`public/animals/lion/shape.js`.
 
 - Displays a downscaled copy of the source photo for corner selection.
 - Rejects crossed or implausibly small corner quadrilaterals.
@@ -86,8 +89,9 @@ That work should begin only after automatic capture is reliable.
 - Clips the page with the normalized lion contour from the printable template.
 - Crops the transparent result and sends it as a PNG data URL.
 
-The template, contour, and output dimensions must stay aligned. A future species
-definition should make those values data-driven instead of hard-coded.
+The template, contour, and output dimensions must stay aligned. A focused test
+compares the printable SVG's marked silhouette paths with the shared lion mask.
+Future species should follow this same data-driven shape module pattern.
 
 ### Local coordinator
 

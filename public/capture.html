@@ -1,1 +1,49 @@
-<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'><title>Capture Lion</title><link rel='stylesheet' href='/styles.css'></head><body><main class='capture-layout'><h1>Capture lion</h1><p class='instructions'><strong>V0:</strong> photograph the printed sheet, then tap the paper corners: <b>top-left → top-right → bottom-right → bottom-left</b>.</p><div class='toolbar'><label>📷 Choose/take photo <input id='fileInput' type='file' accept='image/*' capture='environment'></label><button id='resetPoints' disabled>↩ Reset corners</button><button id='processBtn' disabled>✂️ Cut out lion</button><button id='sendBtn' class='primary' disabled>🦁 Send to safari</button><a class='button secondary' href='/display.html' target='_blank'>Open display</a></div><div class='stage-wrap'><canvas id='photoCanvas'></canvas></div><div class='status' id='status'></div><div class='preview-row'><section class='preview-card'><h3>Rectified A4 page</h3><canvas id='rectified' width='840' height='1188'></canvas></section><section class='preview-card'><h3>Animal texture</h3><canvas id='cutout' width='840' height='1188'></canvas></section></div></main><script src='/capture.js'></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Capture Lion</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="capture-layout">
+      <h1>Capture lion</h1>
+      <p class="instructions">
+        <strong>V0:</strong> photograph the printed sheet, then tap the paper corners:
+        <b>top-left → top-right → bottom-right → bottom-left</b>.
+      </p>
+
+      <div class="toolbar">
+        <label>
+          📷 Choose/take photo
+          <input id="fileInput" type="file" accept="image/*" capture="environment">
+        </label>
+        <button id="resetPoints" disabled>↩ Reset corners</button>
+        <button id="processBtn" disabled>✂️ Cut out lion</button>
+        <button id="sendBtn" class="primary" disabled>🦁 Send to safari</button>
+        <a class="button secondary" href="/display.html" target="_blank">Open display</a>
+      </div>
+
+      <div class="stage-wrap">
+        <canvas id="photoCanvas"></canvas>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+
+      <div class="preview-row">
+        <section class="preview-card">
+          <h3>Rectified A4 page</h3>
+          <canvas id="rectified" width="840" height="1188"></canvas>
+        </section>
+        <section class="preview-card">
+          <h3>Animal texture</h3>
+          <canvas id="cutout" width="840" height="1188"></canvas>
+        </section>
+      </div>
+    </main>
+
+    <script src="/geometry.js"></script>
+    <script src="/animals/lion/shape.js"></script>
+    <script src="/capture.js"></script>
+  </body>
+</html>

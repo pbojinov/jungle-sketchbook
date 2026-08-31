@@ -42,7 +42,13 @@ function requestRaw(pathname) {
 async function run() {
   await waitForServer();
 
-  for (const pathname of ['/', '/capture.html', '/display.html']) {
+  for (const pathname of [
+    '/',
+    '/capture.html?species=fox',
+    '/display.html',
+    '/animals/lion/template.svg',
+    '/animals/fox/template.svg',
+  ]) {
     const response = await fetch(`${baseUrl}${pathname}`);
     assert.equal(response.status, 200, `${pathname} should load`);
   }
@@ -53,7 +59,7 @@ async function run() {
   assert.deepEqual(await response.json(), []);
 
   response = await fetch(`${baseUrl}/api/animals`, {
-    body: JSON.stringify({ species: 'fox', texture: 'not-a-png' }),
+    body: JSON.stringify({ species: 'giraffe', texture: 'not-a-png' }),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
   });
@@ -73,6 +79,18 @@ async function run() {
   assert.equal(animals.length, 1);
   assert.equal(animals[0].species, 'lion');
   assert.ok(animals[0].id);
+
+  response = await fetch(`${baseUrl}/api/animals`, {
+    body: JSON.stringify({ species: 'fox', texture: onePixelPng }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+  assert.equal(response.status, 201, 'valid fox should be accepted');
+
+  response = await fetch(`${baseUrl}/api/animals`);
+  const animalsWithFox = await response.json();
+  assert.equal(animalsWithFox.length, 2);
+  assert.equal(animalsWithFox[1].species, 'fox');
 
   response = await fetch(`${baseUrl}/api/clear`, { method: 'POST' });
   assert.equal(response.status, 200);

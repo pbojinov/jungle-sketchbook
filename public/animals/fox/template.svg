@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 840 1188">
+  <rect width="840" height="1188" fill="white"/>
+  <style>
+    .outline { fill: white; stroke: #666; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    .detail { fill: none; stroke: #999; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .marker { fill: #111; }
+    text { font-family: Arial, sans-serif; fill: #555; }
+  </style>
+
+  <rect class="marker" x="36" y="36" width="54" height="54"/>
+  <rect fill="white" x="48" y="48" width="30" height="30"/>
+  <rect class="marker" x="750" y="36" width="54" height="54"/>
+  <circle fill="white" cx="777" cy="63" r="15"/>
+  <rect class="marker" x="750" y="1098" width="54" height="54"/>
+  <path fill="white" d="M765 1137l12-25 12 25z"/>
+  <rect class="marker" x="36" y="1098" width="54" height="54"/>
+  <path fill="white" d="M48 1110h30v30H48z M54 1116h18v18H54z" fill-rule="evenodd"/>
+
+  <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — FOX</text>
+  <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the fox. Leave the corner markers visible.</text>
+
+  <path class="outline" data-mask-part="body" d="M285 520
+    C360 495 500 500 600 535
+    C630 565 635 625 610 665
+    C590 690 565 700 540 705
+    L535 825 L495 825 L475 700
+    L365 700 L345 825 L305 825 L300 675
+    C270 640 265 565 285 520 Z"/>
+
+  <path class="outline" data-mask-part="head" d="M285 520
+    C250 500 215 485 180 480
+    L120 525 L180 555
+    C188 610 225 645 285 635
+    C325 610 330 555 285 520 Z"/>
+  <path class="outline" data-mask-part="left-ear" d="M188 490 L175 375 L245 460 Z"/>
+  <path class="outline" data-mask-part="right-ear" d="M235 485 L285 385 L300 520 Z"/>
+
+  <path class="outline" data-mask-part="tail" d="M585 535
+    C650 470 735 455 790 500
+    C755 520 735 555 755 590
+    C720 650 650 685 590 650
+    C615 610 610 570 585 535 Z"/>
+
+  <path class="detail" d="M120 525 L158 526"/>
+  <ellipse cx="137" cy="524" rx="9" ry="7" fill="#777"/>
+  <circle cx="205" cy="520" r="6" fill="#777"/>
+  <path class="detail" d="M180 555 C215 570 250 560 275 535"/>
+  <path class="detail" d="M183 405 L220 465 M280 410 L255 475"/>
+  <path class="detail" d="M285 520 C320 555 325 610 300 675"/>
+  <path class="detail" d="M365 700 L370 610 M475 700 L480 610"/>
+  <path class="detail" d="M308 807 L340 807 M498 807 L530 807"/>
+  <path class="detail" d="M600 535 C650 560 680 605 690 642"/>
+  <path class="detail" d="M735 555 C752 575 753 593 744 610"/>
+
+  <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">V0 prototype — manual corner selection</text>
+</svg>

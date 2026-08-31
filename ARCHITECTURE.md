@@ -78,20 +78,20 @@ That work should begin only after automatic capture is reliable.
 
 `public/capture.js` uses browser Canvas APIs and no external dependencies. The
 pure geometry functions live in `public/geometry.js` so the transform math can
-be tested without a browser. The lion silhouette and crop bounds live in
-`public/animals/lion/shape.js`.
+be tested without a browser. Each animal folder contains its printable template
+and a matching shape module with silhouette, crop bounds, and display metadata.
 
 - Displays a downscaled copy of the source photo for corner selection.
 - Rejects crossed or implausibly small corner quadrilaterals.
 - Downscales very large phone photos before pixel processing to limit memory use.
 - Solves an 8-variable projective transform using Gaussian elimination.
 - Uses inverse mapping and bilinear sampling to produce the canonical page.
-- Clips the page with the normalized lion contour from the printable template.
+- Clips the page with the selected species contour from its printable template.
 - Crops the transparent result and sends it as a PNG data URL.
 
-The template, contour, and output dimensions must stay aligned. A focused test
-compares the printable SVG's marked silhouette paths with the shared lion mask.
-Future species should follow this same data-driven shape module pattern.
+The template, contour, and output dimensions must stay aligned. Focused tests
+compare each printable SVG's marked silhouette paths with its shared capture
+mask. Adding a species does not duplicate the capture pipeline.
 
 ### Local coordinator
 
@@ -175,7 +175,7 @@ No Play Store publication is needed for a sideloaded household build.
 
 ## Recommended implementation sequence
 
-### Milestone 0 — end-to-end proof (current)
+### Milestone 0 — end-to-end proof (complete)
 
 - One lion template
 - Manual four-corner registration
@@ -205,9 +205,9 @@ Exit criterion: hold up a page and see it submitted without tapping corners.
 
 Exit criterion: the child's exact lion visibly walks rather than sliding/bobbing.
 
-### Milestone 3 — content expansion
+### Milestone 3 — content expansion (started)
 
-- Add fox, zebra, elephant, and gazelle templates
+- Add lion and fox templates, followed by zebra, elephant, and gazelle
 - Move species geometry and behavior into data files
 - Add per-species scale, speed, lane, and animation settings
 

@@ -4,6 +4,8 @@
     module.exports = shape;
   } else {
     root.LionShape = shape;
+    root.AnimalShapes = root.AnimalShapes || {};
+    root.AnimalShapes.lion = shape;
   }
 })(typeof globalThis === 'object' ? globalThis : this, function createLionShape() {
   const maskParts = [
@@ -32,6 +34,7 @@
   ];
 
   return {
+    emoji: '🦁',
     bounds: { x: 104, y: 387, width: 709, height: 471 },
     maskParts,
     maskPath: maskParts.join(' '),

@@ -8,7 +8,7 @@
   </head>
   <body>
     <main class="capture-layout">
-      <h1>Capture lion</h1>
+      <h1 id="captureTitle">Capture animal</h1>
       <p class="instructions">
         <strong>V0:</strong> photograph the printed sheet, then tap the paper corners:
         <b>top-left → top-right → bottom-right → bottom-left</b>.
@@ -20,8 +20,8 @@
           <input id="fileInput" type="file" accept="image/*" capture="environment">
         </label>
         <button id="resetPoints" disabled>↩ Reset corners</button>
-        <button id="processBtn" disabled>✂️ Cut out lion</button>
-        <button id="sendBtn" class="primary" disabled>🦁 Send to safari</button>
+        <button id="processBtn" disabled>✂️ Cut out animal</button>
+        <button id="sendBtn" class="primary" disabled>Send to safari</button>
         <a class="button secondary" href="/display.html" target="_blank">Open display</a>
       </div>
 
@@ -36,7 +36,7 @@
           <canvas id="rectified" width="840" height="1188"></canvas>
         </section>
         <section class="preview-card">
-          <h3>Animal texture</h3>
+          <h3 id="animalPreviewTitle">Animal texture</h3>
           <canvas id="cutout" width="840" height="1188"></canvas>
         </section>
       </div>
@@ -44,6 +44,7 @@
 
     <script src="/geometry.js"></script>
     <script src="/animals/lion/shape.js"></script>
+    <script src="/animals/fox/shape.js"></script>
     <script src="/capture.js"></script>
   </body>
 </html>

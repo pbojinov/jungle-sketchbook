@@ -8,6 +8,7 @@ const PORT = Number(process.env.PORT) || 8000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BODY_BYTES = 5_000_000;
 const MAX_ANIMALS = 30;
+const SUPPORTED_SPECIES = new Set(['fox', 'lion']);
 const clients = new Set();
 const animals = [];
 
@@ -108,15 +109,15 @@ function handleAnimalUpload(req, res) {
         typeof data.texture === 'string' &&
         data.texture.startsWith('data:image/png;base64,');
 
-      if (data.species !== 'lion' || !validTexture) {
-        sendJson(res, 400, { error: 'Expected a lion with a PNG data URL' });
+      if (!SUPPORTED_SPECIES.has(data.species) || !validTexture) {
+        sendJson(res, 400, { error: 'Expected a supported species with a PNG data URL' });
         return;
       }
 
       const animal = {
         createdAt: Date.now(),
         id: crypto.randomUUID(),
-        species: 'lion',
+        species: data.species,
         texture: data.texture,
       };
       animals.push(animal);

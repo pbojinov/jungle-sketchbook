@@ -9,13 +9,20 @@ const resetPointsButton = document.querySelector('#resetPoints');
 const processButton = document.querySelector('#processBtn');
 const sendButton = document.querySelector('#sendBtn');
 const statusElement = document.querySelector('#status');
+const pageTitle = document.querySelector('#captureTitle');
+const previewTitle = document.querySelector('#animalPreviewTitle');
 
 const {
   createHomography,
   isValidQuadrilateral,
   mapHomography,
 } = window.SketchGeometry;
-const { bounds: LION_BOUNDS, maskPath: LION_MASK_PATH } = window.LionShape;
+
+const requestedSpecies = new URLSearchParams(window.location.search).get('species') || 'lion';
+const speciesDefinitions = window.AnimalShapes || {};
+const species = speciesDefinitions[requestedSpecies] ? requestedSpecies : 'lion';
+const shape = speciesDefinitions[species];
+const speciesName = species[0].toUpperCase() + species.slice(1);
 
 const PAGE_WIDTH = 840;
 const PAGE_HEIGHT = 1188;
@@ -25,6 +32,12 @@ let image = null;
 let selectedCorners = [];
 let displayScale = 1;
 let finalTexture = null;
+
+document.title = `Capture ${speciesName}`;
+pageTitle.textContent = `Capture ${species}`;
+previewTitle.textContent = `${speciesName} texture`;
+processButton.textContent = `✂️ Cut out ${species}`;
+sendButton.textContent = `${shape.emoji} Send to safari`;
 
 function setStatus(message) {
   statusElement.textContent = message;
@@ -118,7 +131,7 @@ photoCanvas.addEventListener('pointerdown', (event) => {
   }
 
   if (isValidQuadrilateral(selectedCorners, photoCanvas.width, photoCanvas.height)) {
-    setStatus('Corners ready. Cut out the lion.');
+    setStatus(`Corners ready. Cut out the ${species}.`);
     processButton.disabled = false;
   } else {
     setStatus(
@@ -211,26 +224,26 @@ function rectifyPage() {
   rectifiedContext.putImageData(outputImage, 0, 0);
 }
 
-function makeLionCutout() {
+function makeAnimalCutout() {
   cutoutContext.clearRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
   cutoutContext.save();
-  cutoutContext.clip(new Path2D(LION_MASK_PATH));
+  cutoutContext.clip(new Path2D(shape.maskPath));
   cutoutContext.drawImage(rectifiedCanvas, 0, 0);
   cutoutContext.restore();
 
   const croppedCanvas = document.createElement('canvas');
-  croppedCanvas.width = LION_BOUNDS.width;
-  croppedCanvas.height = LION_BOUNDS.height;
+  croppedCanvas.width = shape.bounds.width;
+  croppedCanvas.height = shape.bounds.height;
   croppedCanvas.getContext('2d').drawImage(
     cutoutCanvas,
-    LION_BOUNDS.x,
-    LION_BOUNDS.y,
-    LION_BOUNDS.width,
-    LION_BOUNDS.height,
+    shape.bounds.x,
+    shape.bounds.y,
+    shape.bounds.width,
+    shape.bounds.height,
     0,
     0,
-    LION_BOUNDS.width,
-    LION_BOUNDS.height,
+    shape.bounds.width,
+    shape.bounds.height,
   );
   finalTexture = croppedCanvas.toDataURL('image/png');
 }
@@ -240,9 +253,9 @@ processButton.addEventListener('click', async () => {
     setStatus('Rectifying page…');
     await new Promise((resolve) => requestAnimationFrame(resolve));
     rectifyPage();
-    makeLionCutout();
+    makeAnimalCutout();
     sendButton.disabled = false;
-    setStatus('Lion extracted. Check the preview, then send it.');
+    setStatus(`${speciesName} extracted. Check the preview, then send it.`);
   } catch (error) {
     setStatus(`Could not process: ${error.message}`);
   }
@@ -252,15 +265,15 @@ sendButton.addEventListener('click', async () => {
   if (!finalTexture) return;
 
   sendButton.disabled = true;
-  setStatus('Sending lion…');
+  setStatus(`Sending ${species}…`);
   try {
     const response = await fetch('/api/animals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ species: 'lion', texture: finalTexture }),
+      body: JSON.stringify({ species, texture: finalTexture }),
     });
     if (!response.ok) throw new Error(await response.text());
-    setStatus('🦁 Sent! Look at the safari display.');
+    setStatus(`${shape.emoji} Sent! Look at the safari display.`);
   } catch (error) {
     setStatus(`Send failed: ${error.message}`);
   } finally {

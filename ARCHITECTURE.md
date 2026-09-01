@@ -126,6 +126,7 @@ migration option if query or multi-process requirements appear.
 - Randomizes direction, speed, and animation phase.
 - Applies catalog-driven scale, speed, and lane behavior per species.
 - Assigns scale, speed, and vertical lane based on age.
+- Applies validated per-device motion, power, and connection-HUD preferences.
 - Reconnects automatically through the browser's EventSource implementation.
 
 The background uses layered trunks, fronds, colored glows, and fireflies to echo
@@ -233,7 +234,7 @@ Exit criterion: every original safari species can be recognized and animated.
 - Add parent controls and clear/history behavior (implemented)
 - Add server health reporting (implemented)
 - Improve jungle artwork and ambient audio
-- Add kiosk startup and quiet reconnect status
+- Add install metadata, display preferences, and quiet reconnect status (implemented)
 - Build and sideload the Android TV WebView client
 
 Exit criterion: turning on the TV and selecting Jungle Sketchbook is enough to

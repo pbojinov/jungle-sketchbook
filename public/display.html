@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08152c">
     <title>Jungle Sketchbook Safari</title>
+    <link rel="manifest" href="/manifest.webmanifest">
     <style>
       html,
       body {
@@ -29,6 +31,37 @@
         font: 600 14px system-ui;
       }
 
+      #connectionStatus {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        min-width: 12px;
+        min-height: 12px;
+        padding: 7px 10px;
+        color: white;
+        background: #0009;
+        border-radius: 999px;
+        font: 600 12px system-ui;
+        opacity: 0;
+        transition: opacity 300ms ease;
+      }
+
+      #connectionStatus[data-state='offline'] {
+        opacity: 1;
+      }
+
+      #connectionStatus.quiet {
+        width: 12px;
+        min-width: 12px;
+        height: 12px;
+        min-height: 12px;
+        padding: 0;
+        overflow: hidden;
+        color: transparent;
+        background: #f0b45a;
+        font-size: 0;
+      }
+
       #hud {
         left: 16px;
         padding: 10px 14px;
@@ -39,7 +72,9 @@
   <body>
     <canvas id="world"></canvas>
     <div id="hud" aria-live="polite">Live Sketchbook Safari · waiting for animals…</div>
+    <div id="connectionStatus" role="status" aria-live="polite"></div>
     <script src="/species.js"></script>
+    <script src="/display-config.js"></script>
     <script src="/display.js"></script>
   </body>
 </html>

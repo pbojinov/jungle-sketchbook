@@ -81,6 +81,8 @@ That work should begin only after automatic capture is reliable.
 pure geometry functions live in `public/geometry.js` so the transform math can
 be tested without a browser. Each animal folder contains its printable template
 and a matching shape module with silhouette, crop bounds, and display metadata.
+The shared `public/species.js` catalog is also required by the server and drives
+launcher links, dynamic shape loading, validation, scale, speed, and lane bias.
 
 - Displays a downscaled copy of the source photo for corner selection.
 - Detects a complete four-ID marker block and derives the paper corners.
@@ -118,13 +120,15 @@ on-disk directory containing PNG files plus metadata.
 - Deduplicates animals by server-generated ID.
 - Receives new submissions in real time.
 - Randomizes direction, speed, and animation phase.
+- Applies catalog-driven scale, speed, and lane behavior per species.
 - Assigns scale, speed, and vertical lane based on age.
 - Reconnects automatically through the browser's EventSource implementation.
 
 The background uses layered trunks, fronds, colored glows, and fireflies to echo
 the gallery's luminous teal-and-purple jungle while keeping submitted drawings
-visually dominant. Canvas 2D is enough to validate the experience. A future deformable animal can
-use Three.js, PixiJS, or another WebGL renderer while keeping the API unchanged.
+visually dominant. Canvas 2D is enough to validate the experience. A future
+deformable animal can use Three.js, PixiJS, or another WebGL renderer while
+keeping the API unchanged.
 
 ## State model
 
@@ -210,9 +214,9 @@ Exit criterion: hold up a page and see it submitted without tapping corners.
 
 Exit criterion: the child's exact lion visibly walks rather than sliding/bobbing.
 
-### Milestone 3 — content expansion (started)
+### Milestone 3 — content expansion (implemented for static cutouts)
 
-- Add lion, fox, zebra, and gazelle templates, followed by rhino and elephant
+- Add lion, fox, zebra, gazelle, rhino, and elephant templates
 - Move species geometry and behavior into data files
 - Add per-species scale, speed, lane, and animation settings
 

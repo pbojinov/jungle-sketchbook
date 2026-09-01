@@ -128,6 +128,8 @@ async function attemptAutomaticRegistration() {
       window.SketchGeometry,
     );
 
+    if (registration) await window.loadSpeciesShape(registration.species);
+
     const validRegistration =
       registration &&
       configureSpecies(registration.species) &&
@@ -211,7 +213,8 @@ photoCanvas.addEventListener('pointerdown', (event) => {
     processButton.disabled = false;
   } else {
     setStatus(
-      'Those corners cross or cover too little of the photo. Reset and tap TL → TR → BR → BL.',
+      'Those corners cross or cover too little of the photo. ' +
+        'Reset and tap TL → TR → BR → BL.',
     );
     processButton.disabled = true;
   }

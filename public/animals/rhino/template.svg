@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 840 1188">
+  <rect width="840" height="1188" fill="white"/>
+  <style>
+    .outline { fill: white; stroke: #666; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    .detail { fill: none; stroke: #999; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    text { font-family: Arial, sans-serif; fill: #555; }
+  </style>
+
+  <!-- ArUco IDs 16–19: TL, TR, BR, BL. -->
+  <image href="/markers/16.svg" x="25" y="25" width="76" height="76"/>
+  <image href="/markers/17.svg" x="739" y="25" width="76" height="76"/>
+  <image href="/markers/18.svg" x="739" y="1087" width="76" height="76"/>
+  <image href="/markers/19.svg" x="25" y="1087" width="76" height="76"/>
+
+  <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — RHINO</text>
+  <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the rhino. Leave the corner markers visible.</text>
+
+  <path class="outline" data-mask-part="body" d="M280 500 C375 455 535 470 640 525
+    C680 570 680 650 640 700 L615 710
+    L610 840 L560 840 L545 715
+    L390 715 L375 840 L325 840 L315 695
+    C275 655 260 555 280 500 Z"/>
+  <path class="outline" data-mask-part="head" d="M285 510 C250 480 205 475 165 500
+    C135 525 125 575 145 620
+    C175 660 235 665 290 625
+    C320 590 315 545 285 510 Z"/>
+  <path class="outline" data-mask-part="horn" d="M160 535 L95 555 L155 575 Z"/>
+  <path class="outline" data-mask-part="ear" d="M225 490 L205 430 L255 480 Z"/>
+  <path class="outline" data-mask-part="tail" d="M635 535 C680 520 715 535 740 565 L728 590
+    C700 565 675 565 642 585 Z"/>
+
+  <circle cx="190" cy="535" r="7" fill="#777"/>
+  <path class="detail" d="M145 620 C180 600 235 603 280 625"/>
+  <path class="detail" d="M285 510 C325 545 330 625 315 695"/>
+  <path class="detail" d="M390 715 L395 620 M545 715 L550 620"/>
+  <path class="detail" d="M330 820 L370 820 M565 820 L605 820"/>
+  <path class="detail" d="M345 485 C430 530 535 525 620 500"/>
+
+  <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">Automatic markers with manual fallback</text>
+</svg>

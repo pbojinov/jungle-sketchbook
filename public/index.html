@@ -11,44 +11,15 @@
       <h1>Jungle Sketchbook V0</h1>
       <p>Paper → photo → cutout → moving animal.</p>
       <div class="actions">
-        <a class="button" href="/capture.html?species=lion">📷 Capture a lion</a>
-        <a class="button" href="/capture.html?species=fox">📷 Capture a fox</a>
-        <a class="button" href="/capture.html?species=zebra">📷 Capture a zebra</a>
-        <a class="button" href="/capture.html?species=gazelle">📷 Capture a gazelle</a>
-        <a class="button secondary" href="/display.html">🦁 Open safari display</a>
-        <a
-          class="button secondary"
-          href="/animals/lion/template.svg"
-          target="_blank"
-        >
-          🖨️ Open coloring sheet
-        </a>
-        <a
-          class="button secondary"
-          href="/animals/fox/template.svg"
-          target="_blank"
-        >
-          🖨️ Open fox coloring sheet
-        </a>
-        <a
-          class="button secondary"
-          href="/animals/zebra/template.svg"
-          target="_blank"
-        >
-          🖨️ Open zebra coloring sheet
-        </a>
-        <a
-          class="button secondary"
-          href="/animals/gazelle/template.svg"
-          target="_blank"
-        >
-          🖨️ Open gazelle coloring sheet
-        </a>
+        <a class="button secondary" href="/display.html">🌿 Open safari display</a>
       </div>
+      <div class="actions species-actions" id="speciesActions"></div>
       <p class="hint">
-        Current milestone: four gallery-inspired animals, manual four-corner registration,
+        Six gallery-inspired animals, manual four-corner registration,
         deterministic masking, and real-time delivery to another browser.
       </p>
     </main>
+    <script src="/species.js"></script>
+    <script src="/index.js"></script>
   </body>
 </html>

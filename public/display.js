@@ -1,15 +1,30 @@
 const canvas = document.querySelector('#world');
 const context = canvas.getContext('2d');
 const hud = document.querySelector('#hud');
+const connectionStatus = document.querySelector('#connectionStatus');
+
+const displayConfig = window.SketchDisplayConfig.load(window.localStorage);
+const systemPrefersReducedMotion = window.matchMedia(
+  '(prefers-reduced-motion: reduce)',
+).matches;
+const reducedMotion = window.SketchDisplayConfig.reducedMotion(
+  displayConfig,
+  systemPrefersReducedMotion,
+);
+connectionStatus.classList.toggle('quiet', displayConfig.quietHud);
 
 const animals = [];
 const animalIds = new Set();
 let deviceScale = 1;
 let lastFrameTime = performance.now();
+let lastRenderedTime = 0;
 let generation = 0;
+let disconnectTimer = null;
 
 function resizeCanvas() {
-  deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+  deviceScale = displayConfig.lowPower
+    ? 1
+    : Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.floor(window.innerWidth * deviceScale);
   canvas.height = Math.floor(window.innerHeight * deviceScale);
 }
@@ -160,8 +175,9 @@ function drawBackground(width, height, time) {
     );
   });
 
-  const sway = Math.sin(time * 0.00035) * 0.025;
-  for (let index = 0; index < 12; index += 1) {
+  const sway = reducedMotion ? 0 : Math.sin(time * 0.00035) * 0.025;
+  const frondCount = displayConfig.lowPower ? 8 : 12;
+  for (let index = 0; index < frondCount; index += 1) {
     const fromLeft = index % 2 === 0;
     const x = fromLeft ? width * 0.03 : width * 0.97;
     const y = height * (0.05 + (index % 6) * 0.075);
@@ -173,13 +189,16 @@ function drawBackground(width, height, time) {
   context.fillStyle = '#082d35';
   context.fillRect(0, height * 0.7, width, height * 0.3);
 
-  for (let index = 0; index < 34; index += 1) {
+  const fireflyCount = displayConfig.lowPower ? 16 : 34;
+  for (let index = 0; index < fireflyCount; index += 1) {
     const x = ((index * 83) % 997) / 997 * width;
     const baseY = (0.2 + ((index * 47) % 70) / 100) * height;
-    const y = baseY + Math.sin(time * 0.001 + index * 1.7) * 8;
-    const pulse = 1.5 + 1.4 * Math.sin(time * 0.002 + index);
+    const y = baseY + (reducedMotion ? 0 : Math.sin(time * 0.001 + index * 1.7) * 8);
+    const pulse = reducedMotion ? 1.5 : 1.5 + 1.4 * Math.sin(time * 0.002 + index);
     context.fillStyle = index % 3 === 0 ? '#ffd88c' : '#75f8df';
-    context.globalAlpha = 0.45 + 0.35 * Math.sin(time * 0.0015 + index * 0.9);
+    context.globalAlpha = reducedMotion
+      ? 0.55
+      : 0.45 + 0.35 * Math.sin(time * 0.0015 + index * 0.9);
     context.beginPath();
     context.arc(x, y, Math.max(0.8, pulse), 0, Math.PI * 2);
     context.fill();
@@ -189,7 +208,7 @@ function drawBackground(width, height, time) {
 
 function drawForeground(width, height, time) {
   const colors = ['#235f63', '#71418e', '#267c77', '#a34389'];
-  const sway = Math.sin(time * 0.0005) * 0.035;
+  const sway = reducedMotion ? 0 : Math.sin(time * 0.0005) * 0.035;
   for (let index = 0; index < 10; index += 1) {
     const x = width * (index / 9);
     const y = height * (0.86 + (index % 2) * 0.05);
@@ -214,12 +233,14 @@ function drawAnimal(animal, width, height, deltaTime) {
     Math.min(width / 900, 1.5) *
     animal.behavior.scale;
   const lane = [0.69, 0.61, 0.55][animal.layer] + animal.behavior.laneOffset;
-  animal.x += animal.speed * deltaTime * animal.direction * (1 - 0.14 * animal.layer);
+  const motionScale = reducedMotion ? 0.35 : 1;
+  animal.x +=
+    animal.speed * deltaTime * animal.direction * (1 - 0.14 * animal.layer) * motionScale;
 
   const animalWidth = animal.image.width * scale;
   const animalHeight = animal.image.height * scale;
-  const y =
-    height * lane - animalHeight + Math.sin(animal.phase + animal.age * 5) * 5;
+  const bob = reducedMotion ? 0 : Math.sin(animal.phase + animal.age * 5) * 5;
+  const y = height * lane - animalHeight + bob;
 
   context.save();
   context.translate(animal.x, y);
@@ -228,7 +249,10 @@ function drawAnimal(animal, width, height, deltaTime) {
     context.scale(-1, 1);
   }
   context.translate(animalWidth * 0.5, animalHeight * 0.5);
-  context.rotate(Math.sin(animal.phase + animal.age * 3) * 0.015);
+  const rotation = reducedMotion
+    ? 0
+    : Math.sin(animal.phase + animal.age * 3) * 0.015;
+  context.rotate(rotation);
   context.translate(-animalWidth * 0.5, -animalHeight * 0.5);
   context.drawImage(animal.image, 0, 0, animalWidth, animalHeight);
   context.restore();
@@ -244,6 +268,11 @@ function drawAnimal(animal, width, height, deltaTime) {
 }
 
 function drawFrame(now) {
+  if (displayConfig.lowPower && now - lastRenderedTime < 1000 / 30) {
+    requestAnimationFrame(drawFrame);
+    return;
+  }
+  lastRenderedTime = now;
   const deltaTime = Math.min((now - lastFrameTime) / 1000, 0.05);
   lastFrameTime = now;
   const width = canvas.width / deviceScale;
@@ -280,6 +309,10 @@ fetch('/api/animals')
 
 const events = new EventSource('/api/events');
 events.addEventListener('open', () => {
+  clearTimeout(disconnectTimer);
+  disconnectTimer = null;
+  connectionStatus.dataset.state = 'online';
+  connectionStatus.textContent = '';
   if (!animals.length) updateAnimalCount();
 });
 events.addEventListener('animal', (event) => {
@@ -307,5 +340,9 @@ events.addEventListener('remove', (event) => {
   }
 });
 events.addEventListener('error', () => {
-  if (!animals.length) hud.textContent = 'Reconnecting to the sketchbook server…';
+  if (disconnectTimer) return;
+  disconnectTimer = setTimeout(() => {
+    connectionStatus.dataset.state = 'offline';
+    connectionStatus.textContent = 'Reconnecting';
+  }, 2_500);
 });

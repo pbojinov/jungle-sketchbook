@@ -55,6 +55,16 @@ body {
   font: inherit;
 }
 
+.admin-form select {
+  width: 100%;
+  padding: 12px;
+  color: white;
+  background: #101816;
+  border: 1px solid #52655f;
+  border-radius: 10px;
+  font: inherit;
+}
+
 .inline-settings {
   grid-template-columns: 1fr 1fr auto;
   align-items: end;

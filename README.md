@@ -25,6 +25,7 @@ V0 supports:
 - Persistent local PNG storage with atomic metadata updates
 - PIN-protected parent controls for pause, retention, delete, and clear
 - A local health endpoint for kiosk monitoring
+- Fullscreen install metadata plus reduced-motion and low-power display modes
 - Foreground → midground → background aging and eventual removal
 - Multiple capture/display devices on the same home network
 
@@ -37,6 +38,7 @@ node test/geometry.js
 node test/markers.js
 node test/species-catalog.js
 node test/animal-store.js
+node test/display-config.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -90,6 +92,7 @@ Open these pages:
 | `/capture.html?species=rhino` | Rhino capture station |
 | `/capture.html?species=elephant` | Elephant capture station |
 | `/display.html` | Fullscreen safari display |
+| `/display-settings.html` | Per-device safari display settings |
 | `/admin.html` | PIN-protected parent controls |
 
 ### Try the complete flow
@@ -137,6 +140,8 @@ public/markers.js                 Species marker mapping and page registration
 public/capture.js                 Photo, lion mask, and upload pipeline
 public/display.html               Fullscreen safari canvas
 public/display.js                 Scene and animal lifecycle
+public/display-config.js          Validated per-browser display preferences
+public/display-settings.html      Display preference interface
 public/styles.css                 Launcher/capture styles
 public/admin.html                 Parent control interface
 public/admin.js                   Parent authentication and drawing controls
@@ -158,6 +163,7 @@ test/zebra-mask.js                Zebra template/mask consistency test
 test/gazelle-mask.js              Gazelle template/mask consistency test
 test/species-catalog.js            Catalog and all-species contract test
 test/animal-store.js               Persistence, retention, and recovery tests
+test/display-config.js             Display preference validation tests
 ```
 
 ## API
@@ -177,6 +183,19 @@ Uploads use PNG data URLs and are capped at 5 MB. The server stores decoded PNGs
 and compact metadata locally, retaining 30 by default. The parent page can set a
 limit from 1 to 100. API responses use immutable local texture URLs instead of
 re-embedding every image.
+
+## Display and kiosk mode
+
+Open `/display-settings.html` on each display device to choose full or reduced
+motion, cap rendering near 30 fps for low-power hardware, and select a quiet
+reconnect indicator. These settings stay in that browser and do not affect the
+capture devices or server.
+
+The included web manifest launches `/display.html` fullscreen when the browser
+allows installation. Browser installation generally requires HTTPS (localhost
+is the development exception), so a plain HTTP LAN URL remains a normal browser
+experience. The planned Android TV wrapper provides reliable fullscreen startup
+for the Bravia without pretending local HTTP is a secure PWA origin.
 
 ## Important V0 limitations
 

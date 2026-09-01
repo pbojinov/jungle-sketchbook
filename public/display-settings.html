@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08152c">
+    <title>Safari Display Settings</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="home">
+    <main class="card admin-card">
+      <h1>Display settings</h1>
+      <p>These preferences stay in this browser or TV only.</p>
+      <form id="displaySettings" class="admin-form">
+        <label for="motion">Motion</label>
+        <select id="motion">
+          <option value="system">Follow device setting</option>
+          <option value="full">Full animation</option>
+          <option value="reduced">Reduced motion</option>
+        </select>
+        <label>
+          <input id="lowPower" type="checkbox">
+          Low-power mode (30 fps, fewer effects)
+        </label>
+        <label>
+          <input id="quietHud" type="checkbox">
+          Use a quiet connection indicator
+        </label>
+        <button class="button" type="submit">Save and open safari</button>
+      </form>
+      <p id="settingsStatus" class="status" aria-live="polite"></p>
+      <a href="/">Back to launcher</a>
+    </main>
+    <script src="/display-config.js"></script>
+    <script src="/display-settings.js"></script>
+  </body>
+</html>

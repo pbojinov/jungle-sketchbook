@@ -58,6 +58,7 @@ async function run() {
     '/display.html',
     '/display-settings.html',
     '/display-config.js',
+    '/animals/lion/rig.js',
     '/manifest.webmanifest',
     '/icons/app-icon.svg',
     '/admin.html',

@@ -11,6 +11,9 @@ const reducedMotion = window.SketchDisplayConfig.reducedMotion(
   displayConfig,
   systemPrefersReducedMotion,
 );
+const paperRigsEnabled =
+  !reducedMotion &&
+  new URLSearchParams(window.location.search).get('rig') !== 'off';
 connectionStatus.classList.toggle('quiet', displayConfig.quietHud);
 
 const animals = [];
@@ -61,6 +64,14 @@ function addAnimal(data, restored = false) {
       scale: 1,
       speed: 1,
     };
+    let rig = null;
+    if (paperRigsEnabled && data.species === 'lion' && window.AnimalRigs?.lion) {
+      try {
+        rig = window.AnimalRigs.lion.create(image);
+      } catch {
+        rig = null;
+      }
+    }
     animals.push({
       behavior,
       id: data.id,
@@ -69,6 +80,7 @@ function addAnimal(data, restored = false) {
       x: direction === 1 ? -image.width : window.innerWidth + image.width,
       age: restored ? 25 : 0,
       phase: Math.random() * Math.PI * 2,
+      rig,
       speed: (80 + Math.random() * 35) * behavior.speed,
       layer: restored ? 1 : 0,
     });
@@ -254,7 +266,12 @@ function drawAnimal(animal, width, height, deltaTime) {
     : Math.sin(animal.phase + animal.age * 3) * 0.015;
   context.rotate(rotation);
   context.translate(-animalWidth * 0.5, -animalHeight * 0.5);
-  context.drawImage(animal.image, 0, 0, animalWidth, animalHeight);
+  if (animal.rig) {
+    context.scale(scale, scale);
+    animal.rig.draw(context, animal.age, animal.phase);
+  } else {
+    context.drawImage(animal.image, 0, 0, animalWidth, animalHeight);
+  }
   context.restore();
 
   const leftScene =

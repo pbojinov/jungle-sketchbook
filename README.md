@@ -26,6 +26,7 @@ V0 supports:
 - PIN-protected parent controls for pause, retention, delete, and clear
 - A local health endpoint for kiosk monitoring
 - Fullscreen install metadata plus reduced-motion and low-power display modes
+- Optional articulated lion paper-puppet motion with a whole-cutout fallback
 - Foreground → midground → background aging and eventual removal
 - Multiple capture/display devices on the same home network
 
@@ -40,6 +41,7 @@ node test/species-catalog.js
 node test/animal-store.js
 node test/display-config.js
 node test/android-tv-contract.js
+node test/lion-rig.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -149,6 +151,7 @@ public/admin.js                   Parent authentication and drawing controls
 lib/animal-store.js               Atomic PNG, index, and settings persistence
 public/animals/lion/template.svg  Printable sheet and source geometry
 public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
+public/animals/lion/rig.js        Lion parts, joints, and paper-puppet renderer
 public/animals/fox/template.svg   Printable fox sheet and source geometry
 public/animals/fox/shape.js       Shared fox extraction mask and crop bounds
 public/animals/zebra/             Zebra template and shape module
@@ -166,6 +169,7 @@ test/species-catalog.js            Catalog and all-species contract test
 test/animal-store.js               Persistence, retention, and recovery tests
 test/display-config.js             Display preference validation tests
 test/android-tv-contract.js        Android manifest and WebView safety checks
+test/lion-rig.js                   Rig definition and walk-pose tests
 android-tv/                        Sideloadable fullscreen Android TV wrapper
 ```
 
@@ -212,7 +216,8 @@ addresses require HTTPS.
 
 - Six animal species with fixed silhouettes
 - Automatic registration still needs a real printed-photo validation set
-- Simplified paper-cutout motion rather than a skeletal walk cycle
+- The lion uses rigid articulation; append `?rig=off` to use the whole cutout
+- Other species still use simple whole-cutout motion
 - Parent sessions reset when the server restarts
 - Intended only for a trusted home LAN; do not expose this server to the internet
 - The printed guide lines remain visible in the extracted artwork

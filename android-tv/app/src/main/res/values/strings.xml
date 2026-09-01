@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Jungle Sketchbook</string>
+    <string name="connecting">Connecting to Jungle Sketchbook…</string>
+    <string name="server_url">Sketchbook server URL</string>
+    <string name="server_url_hint">http://sketchbook.local:8000</string>
+    <string name="invalid_server_url">
+        Use http://sketchbook.local or an HTTPS private address.
+    </string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="retrying">Server unavailable. Retrying…</string>
+    <string name="exit_hint">Press Back again to exit</string>
+</resources>

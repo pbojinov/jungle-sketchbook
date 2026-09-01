@@ -47,6 +47,7 @@ async function run() {
     '/capture.html?species=fox',
     '/display.html',
     '/animals/lion/template.svg',
+    '/animals/lion/rig.js',
     '/animals/fox/template.svg',
     '/animals/zebra/template.svg',
     '/animals/gazelle/template.svg',

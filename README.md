@@ -21,6 +21,7 @@ V0 supports:
 - A predefined species silhouette that preserves the child's exact pixels
 - Live delivery from the capture device to every open display
 - Foreground → midground → background aging and eventual removal
+- Optional articulated paper-puppet walk cycle for correctly sized lion cutouts
 - Multiple capture/display devices on the same home network
 
 The server uses only Node's standard library. There is no install or build step.
@@ -29,6 +30,7 @@ Run the small test suite with:
 
 ```bash
 node test/geometry.js
+node test/lion-rig.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -118,6 +120,7 @@ public/display.js                 Scene and animal lifecycle
 public/styles.css                 Launcher/capture styles
 public/animals/lion/template.svg  Printable sheet and source geometry
 public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
+public/animals/lion/rig.js        Lion parts, joints, and paper-puppet renderer
 public/animals/fox/template.svg   Printable fox sheet and source geometry
 public/animals/fox/shape.js       Shared fox extraction mask and crop bounds
 public/animals/zebra/             Zebra template and shape module
@@ -125,6 +128,7 @@ public/animals/gazelle/           Gazelle template and shape module
 test/smoke.js                     Dependency-free server/API smoke test
 test/geometry.js                  Focused image-geometry unit tests
 test/lion-mask.js                 Template/mask consistency test
+test/lion-rig.js                  Rig definition and walk-pose tests
 test/fox-mask.js                  Fox template/mask consistency test
 test/zebra-mask.js                Zebra template/mask consistency test
 test/gazelle-mask.js              Gazelle template/mask consistency test
@@ -147,7 +151,8 @@ the server restarts.
 
 - Four animal species with fixed silhouettes
 - Manual page-corner selection
-- Simplified paper-cutout motion rather than a skeletal walk cycle
+- The lion uses rigid paper-puppet articulation rather than mesh deformation;
+  append `?rig=off` to the display URL to use whole-cutout motion
 - No persistent storage, authentication, or access control
 - Intended only for a trusted home LAN; do not expose this server to the internet
 - The printed guide lines remain visible in the extracted artwork

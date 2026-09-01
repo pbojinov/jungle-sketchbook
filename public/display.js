@@ -5,6 +5,7 @@ const clearButton = document.querySelector('#clear');
 
 const animals = [];
 const animalIds = new Set();
+const paperRigsEnabled = new URLSearchParams(window.location.search).get('rig') !== 'off';
 let deviceScale = 1;
 let lastFrameTime = performance.now();
 let generation = 0;
@@ -42,9 +43,20 @@ function addAnimal(data, restored = false) {
     }
 
     const direction = Math.random() < 0.5 ? 1 : -1;
+    let rig = null;
+    if (paperRigsEnabled && data.species === 'lion' && window.AnimalRigs?.lion) {
+      try {
+        rig = window.AnimalRigs.lion.create(image);
+      } catch {
+        rig = null;
+      }
+    }
+
     animals.push({
       id: data.id,
       image,
+      rig,
+      species: data.species,
       direction,
       x: direction === 1 ? -image.width : window.innerWidth + image.width,
       age: restored ? 25 : 0,
@@ -222,7 +234,12 @@ function drawAnimal(animal, width, height, deltaTime) {
   context.translate(animalWidth * 0.5, animalHeight * 0.5);
   context.rotate(Math.sin(animal.phase + animal.age * 3) * 0.015);
   context.translate(-animalWidth * 0.5, -animalHeight * 0.5);
-  context.drawImage(animal.image, 0, 0, animalWidth, animalHeight);
+  context.scale(scale, scale);
+  if (animal.rig) {
+    animal.rig.draw(context, animal.age, animal.phase);
+  } else {
+    context.drawImage(animal.image, 0, 0);
+  }
   context.restore();
 
   const leftScene =

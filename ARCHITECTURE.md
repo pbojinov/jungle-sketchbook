@@ -117,11 +117,17 @@ on-disk directory containing PNG files plus metadata.
 - Randomizes direction, speed, and animation phase.
 - Assigns scale, speed, and vertical lane based on age.
 - Reconnects automatically through the browser's EventSource implementation.
+- Builds a cached five-part lion from the exact submitted texture and animates
+  its head/mane, body, legs, and tail around declared pivots.
+- Falls back to the whole cutout when the rig is disabled, unsupported, or the
+  texture dimensions do not match the canonical lion crop.
 
 The background uses layered trunks, fronds, colored glows, and fireflies to echo
 the gallery's luminous teal-and-purple jungle while keeping submitted drawings
-visually dominant. Canvas 2D is enough to validate the experience. A future deformable animal can
-use Three.js, PixiJS, or another WebGL renderer while keeping the API unchanged.
+visually dominant. Rigid articulation is deliberately the first animation step:
+Canvas transforms preserve the child's pixels and keep the implementation
+reversible. A future deformable animal can use Three.js, PixiJS, or another
+WebGL renderer while keeping the API unchanged.
 
 ## State model
 

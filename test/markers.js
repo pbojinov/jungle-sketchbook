@@ -84,7 +84,7 @@ const detector = new AR.Detector({
   dictionaryName: 'ARUCO_MIP_36h12',
   maxHammingDistance: 5,
 });
-for (const id of [0, 7, 15]) {
+for (const id of [0, 7, 15, 19, 23]) {
   const detected = detector.detect(renderMarker(id));
   assert.equal(detected.length, 1, `marker ${id} should be detected`);
   assert.equal(detected[0].id, id);

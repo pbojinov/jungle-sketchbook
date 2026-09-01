@@ -42,14 +42,20 @@ function addAnimal(data, restored = false) {
     }
 
     const direction = Math.random() < 0.5 ? 1 : -1;
+    const behavior = window.SpeciesCatalog[data.species]?.behavior || {
+      laneOffset: 0,
+      scale: 1,
+      speed: 1,
+    };
     animals.push({
+      behavior,
       id: data.id,
       image,
       direction,
       x: direction === 1 ? -image.width : window.innerWidth + image.width,
       age: restored ? 25 : 0,
       phase: Math.random() * Math.PI * 2,
-      speed: 80 + Math.random() * 35,
+      speed: (80 + Math.random() * 35) * behavior.speed,
       layer: restored ? 1 : 0,
     });
 
@@ -204,8 +210,11 @@ function drawAnimal(animal, width, height, deltaTime) {
   if (animal.age > 14 && animal.layer === 0) animal.layer = 1;
   if (animal.age > 32 && animal.layer === 1) animal.layer = 2;
 
-  const scale = [0.42, 0.28, 0.18][animal.layer] * Math.min(width / 900, 1.5);
-  const lane = [0.69, 0.61, 0.55][animal.layer];
+  const scale =
+    [0.42, 0.28, 0.18][animal.layer] *
+    Math.min(width / 900, 1.5) *
+    animal.behavior.scale;
+  const lane = [0.69, 0.61, 0.55][animal.layer] + animal.behavior.laneOffset;
   animal.x += animal.speed * deltaTime * animal.direction * (1 - 0.14 * animal.layer);
 
   const animalWidth = animal.image.width * scale;

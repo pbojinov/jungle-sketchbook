@@ -1,17 +1,22 @@
 (function exposeMarkers(root, factory) {
-  const markers = factory();
+  const catalog = typeof module === 'object' && module.exports
+    ? require('./species')
+    : root.SpeciesCatalog;
+  const markers = factory(catalog);
   if (typeof module === 'object' && module.exports) {
     module.exports = markers;
   } else {
     root.SketchMarkers = markers;
   }
-})(typeof globalThis === 'object' ? globalThis : this, function createMarkers() {
-  const speciesMarkerIds = {
-    lion: [0, 1, 2, 3],
-    fox: [4, 5, 6, 7],
-    zebra: [8, 9, 10, 11],
-    gazelle: [12, 13, 14, 15],
-  };
+})(typeof globalThis === 'object' ? globalThis : this, function createMarkers(catalog) {
+  if (!catalog) throw new Error('Species catalog must load before marker mapping');
+
+  const speciesMarkerIds = Object.fromEntries(
+    Object.entries(catalog).map(([species, definition]) => [
+      species,
+      definition.markerIds,
+    ]),
+  );
 
   const canonicalMarkerCenters = [
     [63, 63],

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 840 1188">
+  <rect width="840" height="1188" fill="white"/>
+  <style>
+    .outline { fill: white; stroke: #666; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    .detail { fill: none; stroke: #999; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    text { font-family: Arial, sans-serif; fill: #555; }
+  </style>
+
+  <!-- ArUco IDs 20–23: TL, TR, BR, BL. -->
+  <image href="/markers/20.svg" x="25" y="25" width="76" height="76"/>
+  <image href="/markers/21.svg" x="739" y="25" width="76" height="76"/>
+  <image href="/markers/22.svg" x="739" y="1087" width="76" height="76"/>
+  <image href="/markers/23.svg" x="25" y="1087" width="76" height="76"/>
+
+  <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — ELEPHANT</text>
+  <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the elephant. Leave the corner markers visible.</text>
+
+  <path class="outline" data-mask-part="body" d="M300 455 C405 410 560 430 650 500
+    C690 555 690 650 650 705 L620 720
+    L615 855 L560 855 L545 720
+    L410 720 L395 855 L340 855 L330 700
+    C285 650 275 525 300 455 Z"/>
+  <path class="outline" data-mask-part="head" d="M300 470 C260 430 205 430 165 465
+    C125 505 125 575 160 620
+    C195 660 255 660 305 615
+    C335 570 330 515 300 470 Z"/>
+  <path class="outline" data-mask-part="trunk" d="M155 545 C125 580 120 650 145 710
+    C155 735 145 765 115 780
+    C155 800 190 775 188 735
+    C180 665 190 605 205 565 Z"/>
+  <path class="outline" data-mask-part="ear" d="M185 480 C215 455 270 470 282 520
+    C285 570 250 610 205 605
+    C175 585 165 520 185 480 Z"/>
+  <path class="outline" data-mask-part="tail" d="M645 510 C690 495 725 510 750 540 L738 565
+    C710 540 685 540 652 560 Z"/>
+
+  <circle cx="175" cy="520" r="7" fill="#777"/>
+  <path class="detail" d="M205 565 C225 575 245 570 260 555"/>
+  <path class="detail" d="M300 470 C340 520 345 630 330 700"/>
+  <path class="detail" d="M410 720 L415 610 M545 720 L550 610"/>
+  <path class="detail" d="M345 835 L390 835 M565 835 L610 835"/>
+  <path class="detail" d="M350 450 C440 495 555 490 630 465"/>
+
+  <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">Automatic markers with manual fallback</text>
+</svg>

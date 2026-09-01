@@ -2,6 +2,7 @@ const assert = require('assert/strict');
 const http = require('http');
 const path = require('path');
 const { spawn } = require('child_process');
+const speciesCatalog = require('../public/species');
 
 const port = 18_000 + Math.floor(Math.random() * 1_000);
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -42,17 +43,18 @@ function requestRaw(pathname) {
 async function run() {
   await waitForServer();
 
-  for (const pathname of [
+  const staticPaths = [
     '/',
     '/capture.html?species=fox',
     '/display.html',
-    '/animals/lion/template.svg',
-    '/animals/fox/template.svg',
-    '/animals/zebra/template.svg',
-    '/animals/gazelle/template.svg',
+    '/species.js',
+    '/capture-loader.js',
     '/markers/0.svg',
+    '/markers/23.svg',
     '/vendor/js-aruco2/aruco.js',
-  ]) {
+    ...Object.keys(speciesCatalog).map((species) => `/animals/${species}/template.svg`),
+  ];
+  for (const pathname of staticPaths) {
     const response = await fetch(`${baseUrl}${pathname}`);
     assert.equal(response.status, 200, `${pathname} should load`);
   }
@@ -69,9 +71,12 @@ async function run() {
   });
   assert.equal(response.status, 400, 'invalid animal should be rejected');
 
-  const onePixelPng =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-  const supportedSpecies = ['lion', 'fox', 'zebra', 'gazelle'];
+  const onePixelPng = [
+    'data:image/png;base64,',
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk',
+    '+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  ].join('');
+  const supportedSpecies = Object.keys(speciesCatalog);
   for (const species of supportedSpecies) {
     response = await fetch(`${baseUrl}/api/animals`, {
       body: JSON.stringify({ species, texture: onePixelPng }),

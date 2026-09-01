@@ -3,18 +3,19 @@
 A local, browser-based prototype inspired by museum coloring installations and
 the open-source Paper Aquarium architecture:
 
-**printed coloring sheet → phone photo → corrected page → child artwork cutout → animated TV display**
+**printed coloring sheet → phone photo → corrected page → child artwork cutout
+→ animated TV display**
 
-The first milestone is intentionally narrow: four animal templates, manual
-corner selection, deterministic masks, and simple paper-cutout animation. This
-proves the full home-network pipeline before we invest in automatic scanning and
-articulated animal rigs.
+The prototype stays deliberately narrow: six known animal templates, automatic
+registration with a manual fallback, deterministic masks, and simple
+paper-cutout animation. This proves the full home-network pipeline while the
+capture flow and articulated rigs evolve independently.
 
 ## Current status
 
 V0 supports:
 
-- Printable A4 lion, fox, zebra, and gazelle sheets with four corner markers
+- Printable A4 lion, fox, zebra, gazelle, rhino, and elephant sheets
 - Photo selection directly from a phone camera or photo library
 - Automatic species and page-corner detection from four printed ArUco markers
 - Manual TL → TR → BR → BL corner registration
@@ -31,6 +32,7 @@ Run the small test suite with:
 ```bash
 node test/geometry.js
 node test/markers.js
+node test/species-catalog.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -71,10 +73,14 @@ Open these pages:
 | `/animals/fox/template.svg` | Printable fox sheet |
 | `/animals/zebra/template.svg` | Printable zebra sheet |
 | `/animals/gazelle/template.svg` | Printable gazelle sheet |
+| `/animals/rhino/template.svg` | Printable rhino sheet |
+| `/animals/elephant/template.svg` | Printable elephant sheet |
 | `/capture.html?species=lion` | Lion capture station |
 | `/capture.html?species=fox` | Fox capture station |
 | `/capture.html?species=zebra` | Zebra capture station |
 | `/capture.html?species=gazelle` | Gazelle capture station |
+| `/capture.html?species=rhino` | Rhino capture station |
+| `/capture.html?species=elephant` | Elephant capture station |
 | `/display.html` | Fullscreen safari display |
 
 ### Try the complete flow
@@ -113,7 +119,10 @@ state, and rendering continue to live in this web project.
 server.js                         Local HTTP, API, and event server
 ARCHITECTURE.md                   Design, data flow, and roadmap
 public/index.html                 Launcher
+public/index.js                   Catalog-driven launcher actions
+public/species.js                 Shared species and behavior catalog
 public/capture.html               Capture interface
+public/capture-loader.js          Loads only the selected species shape
 public/geometry.js                Tested homography and corner-validation math
 public/markers.js                 Species marker mapping and page registration
 public/capture.js                 Photo, lion mask, and upload pipeline
@@ -126,6 +135,8 @@ public/animals/fox/template.svg   Printable fox sheet and source geometry
 public/animals/fox/shape.js       Shared fox extraction mask and crop bounds
 public/animals/zebra/             Zebra template and shape module
 public/animals/gazelle/           Gazelle template and shape module
+public/animals/rhino/             Rhino template and shape module
+public/animals/elephant/          Elephant template and shape module
 test/smoke.js                     Dependency-free server/API smoke test
 test/geometry.js                  Focused image-geometry unit tests
 test/markers.js                   Marker detection and registration tests
@@ -133,6 +144,7 @@ test/lion-mask.js                 Template/mask consistency test
 test/fox-mask.js                  Fox template/mask consistency test
 test/zebra-mask.js                Zebra template/mask consistency test
 test/gazelle-mask.js              Gazelle template/mask consistency test
+test/species-catalog.js            Catalog and all-species contract test
 ```
 
 ## API
@@ -150,7 +162,7 @@ the server restarts.
 
 ## Important V0 limitations
 
-- Four animal species with fixed silhouettes
+- Six animal species with fixed silhouettes
 - Automatic registration still needs a real printed-photo validation set
 - Simplified paper-cutout motion rather than a skeletal walk cycle
 - No persistent storage, authentication, or access control

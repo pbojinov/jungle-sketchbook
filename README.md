@@ -39,6 +39,7 @@ node test/markers.js
 node test/species-catalog.js
 node test/animal-store.js
 node test/display-config.js
+node test/android-tv-contract.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -164,6 +165,8 @@ test/gazelle-mask.js              Gazelle template/mask consistency test
 test/species-catalog.js            Catalog and all-species contract test
 test/animal-store.js               Persistence, retention, and recovery tests
 test/display-config.js             Display preference validation tests
+test/android-tv-contract.js        Android manifest and WebView safety checks
+android-tv/                        Sideloadable fullscreen Android TV wrapper
 ```
 
 ## API
@@ -196,6 +199,14 @@ allows installation. Browser installation generally requires HTTPS (localhost
 is the development exception), so a plain HTTP LAN URL remains a normal browser
 experience. The planned Android TV wrapper provides reliable fullscreen startup
 for the Bravia without pretending local HTTP is a secure PWA origin.
+
+The final TV wrapper lives in `android-tv/`. It keeps the screen awake, restores
+immersive fullscreen mode, retries the display after network failures, and
+blocks WebView navigation or resource loads outside the configured private LAN
+origin. See `android-tv/README.md` for Android Studio, sideloading, remote-control
+gestures, the cleartext-LAN exception, and the physical-device checklist.
+The cleartext exception is limited to `sketchbook.local`; other private
+addresses require HTTPS.
 
 ## Important V0 limitations
 

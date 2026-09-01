@@ -179,11 +179,11 @@ internet.
 
 The Android TV deliverable should be a thin fullscreen WebView that:
 
-- Opens a configured local display URL
-- Enables JavaScript and hardware acceleration
-- Keeps the screen awake
-- Hides navigation and system chrome
-- Retries after temporary server/network failures
+- Opens a validated, configured private-LAN display URL (implemented)
+- Enables JavaScript and hardware acceleration (implemented)
+- Keeps the screen awake (implemented)
+- Hides navigation and system chrome (implemented)
+- Retries after temporary server/network failures (implemented)
 - Can later discover the server using mDNS
 
 No Play Store publication is needed for a sideloaded household build.
@@ -235,7 +235,7 @@ Exit criterion: every original safari species can be recognized and animated.
 - Add server health reporting (implemented)
 - Improve jungle artwork and ambient audio
 - Add install metadata, display preferences, and quiet reconnect status (implemented)
-- Build and sideload the Android TV WebView client
+- Build the Android TV WebView client (implemented; device validation pending)
 
 Exit criterion: turning on the TV and selecting Jungle Sketchbook is enough to
 start the experience.

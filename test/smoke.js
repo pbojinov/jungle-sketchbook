@@ -50,6 +50,8 @@ async function run() {
     '/animals/fox/template.svg',
     '/animals/zebra/template.svg',
     '/animals/gazelle/template.svg',
+    '/markers/0.svg',
+    '/vendor/js-aruco2/aruco.js',
   ]) {
     const response = await fetch(`${baseUrl}${pathname}`);
     assert.equal(response.status, 200, `${pathname} should load`);

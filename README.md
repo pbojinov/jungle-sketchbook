@@ -16,6 +16,7 @@ V0 supports:
 
 - Printable A4 lion, fox, zebra, and gazelle sheets with four corner markers
 - Photo selection directly from a phone camera or photo library
+- Automatic species and page-corner detection from four printed ArUco markers
 - Manual TL → TR → BR → BL corner registration
 - Perspective correction using a projective homography
 - A predefined species silhouette that preserves the child's exact pixels
@@ -29,6 +30,7 @@ Run the small test suite with:
 
 ```bash
 node test/geometry.js
+node test/markers.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -82,7 +84,8 @@ Open these pages:
 3. Open `/display.html` on the display computer or TV browser.
 4. Open that species' capture link using the server's LAN URL on the phone.
 5. Take or select a photo containing the entire sheet.
-6. Tap the page corners in this order: TL → TR → BR → BL.
+6. Review the automatically detected corners. If detection fails, tap the page
+   corners in this order: TL → TR → BR → BL.
 7. Select **Cut out**, inspect the previews, and select **Send to safari**.
 
 The display receives the PNG immediately. A new animal starts large in the
@@ -112,6 +115,7 @@ ARCHITECTURE.md                   Design, data flow, and roadmap
 public/index.html                 Launcher
 public/capture.html               Capture interface
 public/geometry.js                Tested homography and corner-validation math
+public/markers.js                 Species marker mapping and page registration
 public/capture.js                 Photo, lion mask, and upload pipeline
 public/display.html               Fullscreen safari canvas
 public/display.js                 Scene and animal lifecycle
@@ -124,6 +128,7 @@ public/animals/zebra/             Zebra template and shape module
 public/animals/gazelle/           Gazelle template and shape module
 test/smoke.js                     Dependency-free server/API smoke test
 test/geometry.js                  Focused image-geometry unit tests
+test/markers.js                   Marker detection and registration tests
 test/lion-mask.js                 Template/mask consistency test
 test/fox-mask.js                  Fox template/mask consistency test
 test/zebra-mask.js                Zebra template/mask consistency test
@@ -146,7 +151,7 @@ the server restarts.
 ## Important V0 limitations
 
 - Four animal species with fixed silhouettes
-- Manual page-corner selection
+- Automatic registration still needs a real printed-photo validation set
 - Simplified paper-cutout motion rather than a skeletal walk cycle
 - No persistent storage, authentication, or access control
 - Intended only for a trusted home LAN; do not expose this server to the internet
@@ -173,3 +178,8 @@ the server restarts.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the validated system design, risks,
 and the recommended order of implementation.
+
+## Third-party code
+
+The browser marker detector vendors js-aruco2 2.0.0 under its included license
+at `public/vendor/js-aruco2/LICENSE.txt`. It makes no runtime network requests.

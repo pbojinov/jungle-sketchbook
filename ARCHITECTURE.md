@@ -40,7 +40,8 @@ browser, or a small native WebView wrapper without changing the capture pipeline
 1. A species template is printed with a fixed outline and four corner markers.
 2. The child colors inside the animal.
 3. The capture client obtains a photo from a phone camera or photo library.
-4. V0 asks the user for four page corners. V1 will detect the markers.
+4. The browser detects four species-specific ArUco markers. Manual corner taps
+   remain available when a photo is unclear.
 5. A homography maps the photographed quadrilateral onto an 840 × 1188 canonical
    page.
 6. The known species contour clips the canonical page to a transparent canvas.
@@ -82,6 +83,8 @@ be tested without a browser. Each animal folder contains its printable template
 and a matching shape module with silhouette, crop bounds, and display metadata.
 
 - Displays a downscaled copy of the source photo for corner selection.
+- Detects a complete four-ID marker block and derives the paper corners.
+- Infers species from the marker block rather than trusting the capture URL.
 - Rejects crossed or implausibly small corner quadrilaterals.
 - Downscales very large phone photos before pixel processing to limit memory use.
 - Solves an 8-variable projective transform using Gaussian elimination.

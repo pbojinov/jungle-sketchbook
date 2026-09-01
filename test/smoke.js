@@ -1,5 +1,7 @@
 const assert = require('assert/strict');
+const fs = require('fs');
 const http = require('http');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const speciesCatalog = require('../public/species');
@@ -7,9 +9,16 @@ const speciesCatalog = require('../public/species');
 const port = 18_000 + Math.floor(Math.random() * 1_000);
 const baseUrl = `http://127.0.0.1:${port}`;
 const projectRoot = path.resolve(__dirname, '..');
+const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jungle-smoke-'));
+let adminCookie = '';
 const server = spawn(process.execPath, ['server.js'], {
   cwd: projectRoot,
-  env: { ...process.env, PORT: String(port) },
+  env: {
+    ...process.env,
+    ADMIN_PIN: '2468',
+    DATA_DIR: dataDir,
+    PORT: String(port),
+  },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 
@@ -47,6 +56,7 @@ async function run() {
     '/',
     '/capture.html?species=fox',
     '/display.html',
+    '/admin.html',
     '/species.js',
     '/capture-loader.js',
     '/markers/0.svg',
@@ -63,6 +73,22 @@ async function run() {
 
   let response = await fetch(`${baseUrl}/api/animals`);
   assert.deepEqual(await response.json(), []);
+
+  response = await fetch(`${baseUrl}/api/health`);
+  const health = await response.json();
+  assert.equal(health.status, 'ok');
+  assert.equal(health.storage.persistent, true);
+
+  response = await fetch(`${baseUrl}/api/clear`, { method: 'POST' });
+  assert.equal(response.status, 401, 'destructive controls should require a PIN session');
+
+  response = await fetch(`${baseUrl}/api/admin/login`, {
+    body: JSON.stringify({ pin: '2468' }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+  assert.equal(response.status, 200);
+  adminCookie = response.headers.get('set-cookie').split(';')[0];
 
   response = await fetch(`${baseUrl}/api/animals`, {
     body: JSON.stringify({ species: 'giraffe', texture: 'not-a-png' }),
@@ -93,8 +119,43 @@ async function run() {
     supportedSpecies,
   );
   assert.ok(animals.every((animal) => animal.id));
+  assert.ok(animals.every((animal) => animal.texture.startsWith('/data/animals/')));
 
-  response = await fetch(`${baseUrl}/api/clear`, { method: 'POST' });
+  response = await fetch(`${baseUrl}${animals[0].texture}`);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'image/png');
+
+  response = await fetch(`${baseUrl}/api/admin/settings`, {
+    body: JSON.stringify({ maxAnimals: 30, paused: true }),
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    method: 'PATCH',
+  });
+  assert.equal(response.status, 200);
+
+  response = await fetch(`${baseUrl}/api/animals`, {
+    body: JSON.stringify({ species: 'lion', texture: onePixelPng }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+  assert.equal(response.status, 503, 'paused arrivals should be rejected');
+
+  response = await fetch(`${baseUrl}/api/admin/settings`, {
+    body: JSON.stringify({ maxAnimals: 30, paused: false }),
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    method: 'PATCH',
+  });
+  assert.equal(response.status, 200);
+
+  response = await fetch(`${baseUrl}/api/animals/${animals[0].id}`, {
+    headers: { Cookie: adminCookie },
+    method: 'DELETE',
+  });
+  assert.equal(response.status, 200);
+
+  response = await fetch(`${baseUrl}/api/clear`, {
+    headers: { Cookie: adminCookie },
+    method: 'POST',
+  });
   assert.equal(response.status, 200);
   response = await fetch(`${baseUrl}/api/animals`);
   assert.deepEqual(await response.json(), []);
@@ -109,4 +170,5 @@ run()
   })
   .finally(() => {
     server.kill('SIGTERM');
+    fs.rmSync(dataDir, { force: true, recursive: true });
   });

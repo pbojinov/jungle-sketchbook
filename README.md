@@ -22,6 +22,9 @@ V0 supports:
 - Perspective correction using a projective homography
 - A predefined species silhouette that preserves the child's exact pixels
 - Live delivery from the capture device to every open display
+- Persistent local PNG storage with atomic metadata updates
+- PIN-protected parent controls for pause, retention, delete, and clear
+- A local health endpoint for kiosk monitoring
 - Foreground → midground → background aging and eventual removal
 - Multiple capture/display devices on the same home network
 
@@ -33,6 +36,7 @@ Run the small test suite with:
 node test/geometry.js
 node test/markers.js
 node test/species-catalog.js
+node test/animal-store.js
 node test/lion-mask.js
 node test/fox-mask.js
 node test/zebra-mask.js
@@ -54,8 +58,12 @@ the interaction and art direction stabilize.
 ## Quick start
 
 ```bash
-node server.js
+ADMIN_PIN=2468 node server.js
 ```
+
+Choose a private PIN for your household. The server still runs without one,
+but parent controls remain locked. Drawings are stored in the ignored `data/`
+directory and survive server restarts.
 
 The terminal prints a localhost URL and, when available, one or more LAN URLs:
 
@@ -82,6 +90,7 @@ Open these pages:
 | `/capture.html?species=rhino` | Rhino capture station |
 | `/capture.html?species=elephant` | Elephant capture station |
 | `/display.html` | Fullscreen safari display |
+| `/admin.html` | PIN-protected parent controls |
 
 ### Try the complete flow
 
@@ -129,6 +138,9 @@ public/capture.js                 Photo, lion mask, and upload pipeline
 public/display.html               Fullscreen safari canvas
 public/display.js                 Scene and animal lifecycle
 public/styles.css                 Launcher/capture styles
+public/admin.html                 Parent control interface
+public/admin.js                   Parent authentication and drawing controls
+lib/animal-store.js               Atomic PNG, index, and settings persistence
 public/animals/lion/template.svg  Printable sheet and source geometry
 public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
 public/animals/fox/template.svg   Printable fox sheet and source geometry
@@ -145,27 +157,33 @@ test/fox-mask.js                  Fox template/mask consistency test
 test/zebra-mask.js                Zebra template/mask consistency test
 test/gazelle-mask.js              Gazelle template/mask consistency test
 test/species-catalog.js            Catalog and all-species contract test
+test/animal-store.js               Persistence, retention, and recovery tests
 ```
 
 ## API
 
 | Method | Route | Description |
 | --- | --- | --- |
-| `GET` | `/api/animals` | Return up to 20 recent in-memory animals |
+| `GET` | `/api/animals` | Return up to 20 recent saved animals |
 | `POST` | `/api/animals` | Accept `{ species, texture }` and broadcast it |
 | `GET` | `/api/events` | Server-Sent Events stream for displays |
-| `POST` | `/api/clear` | Clear all in-memory animals and displays |
+| `GET` | `/api/health` | Return storage, uptime, and display health |
+| `POST` | `/api/admin/login` | Start a PIN-protected parent session |
+| `PATCH` | `/api/admin/settings` | Pause arrivals or change retention |
+| `DELETE` | `/api/animals/:id` | Delete one drawing as a parent |
+| `POST` | `/api/clear` | Clear all saved drawings as a parent |
 
-`texture` is a PNG data URL. Uploads are capped at 5 MB and the server retains a
-maximum of 30 animals. Data is currently held in memory and disappears whenever
-the server restarts.
+Uploads use PNG data URLs and are capped at 5 MB. The server stores decoded PNGs
+and compact metadata locally, retaining 30 by default. The parent page can set a
+limit from 1 to 100. API responses use immutable local texture URLs instead of
+re-embedding every image.
 
 ## Important V0 limitations
 
 - Six animal species with fixed silhouettes
 - Automatic registration still needs a real printed-photo validation set
 - Simplified paper-cutout motion rather than a skeletal walk cycle
-- No persistent storage, authentication, or access control
+- Parent sessions reset when the server restarts
 - Intended only for a trusted home LAN; do not expose this server to the internet
 - The printed guide lines remain visible in the extracted artwork
 

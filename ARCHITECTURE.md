@@ -46,8 +46,8 @@ browser, or a small native WebView wrapper without changing the capture pipeline
    page.
 6. The known species contour clips the canonical page to a transparent canvas.
 7. The cropped PNG is posted with species metadata to `POST /api/animals`.
-8. The server assigns an ID and timestamp, stores the recent submission in
-   memory, and emits an `animal` event.
+8. The server assigns an ID and timestamp, atomically stores the PNG and index,
+   then emits an `animal` event.
 9. Every connected display loads the texture and creates a scene object.
 10. The object begins in the foreground, ages into smaller/slower lanes, and is
     removed after its final pass.
@@ -100,17 +100,21 @@ mask. Adding a species does not duplicate the capture pipeline.
 
 ### Local coordinator
 
-`server.js` is intentionally dependency-free.
+`server.js` and `lib/animal-store.js` are intentionally dependency-free.
 
 - Serves the static client files.
 - Validates species, content type, and payload size.
-- Retains a bounded in-memory list of recent animals.
+- Persists decoded PNGs and a bounded metadata index under `data/`.
+- Writes metadata through a sibling temporary file and atomic rename.
+- Repairs corrupt/missing entries and removes orphaned files during startup.
 - Broadcasts additions and clears using Server-Sent Events.
+- Exposes health and PIN-session-protected parent controls.
 - Sends keepalives so TV/browser connections survive idle periods.
 - Restricts static-file resolution to the `public` directory.
 
-This is adequate for one household. Persistence can later use SQLite or a small
-on-disk directory containing PNG files plus metadata.
+The filesystem store is intentionally single-process and serializes mutations
+to prevent concurrent uploads from racing the index. SQLite remains a future
+migration option if query or multi-process requirements appear.
 
 ### Display client
 
@@ -132,8 +136,9 @@ keeping the API unchanged.
 
 ## State model
 
-The server is the source of truth for recent submissions. A display owns only
-ephemeral visual state such as position, direction, lane, and animation phase.
+The persistent server store is the source of truth for submissions. A display
+owns only ephemeral visual state such as position, direction, lane, and
+animation phase.
 
 ```text
 Server animal
@@ -148,8 +153,8 @@ Display animal
   age / layer / phase
 ```
 
-V0 state is intentionally volatile. Restarting the Node process clears the
-safari. Persistence should be added before scheduled/kiosk operation.
+The server reconstructs this state from validated PNG files and metadata on
+startup. Missing or corrupt entries are dropped rather than blocking startup.
 
 ## Network and deployment
 
@@ -224,10 +229,11 @@ Exit criterion: every original safari species can be recognized and animated.
 
 ### Milestone 4 — household productization
 
-- Persist drawings and metadata
-- Add parent controls and clear/history behavior
+- Persist drawings and metadata (implemented)
+- Add parent controls and clear/history behavior (implemented)
+- Add server health reporting (implemented)
 - Improve jungle artwork and ambient audio
-- Add kiosk startup and server health reporting
+- Add kiosk startup and quiet reconnect status
 - Build and sideload the Android TV WebView client
 
 Exit criterion: turning on the TV and selecting Jungle Sketchbook is enough to

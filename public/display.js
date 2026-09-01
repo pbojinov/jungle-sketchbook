@@ -1,7 +1,6 @@
 const canvas = document.querySelector('#world');
 const context = canvas.getContext('2d');
 const hud = document.querySelector('#hud');
-const clearButton = document.querySelector('#clear');
 
 const animals = [];
 const animalIds = new Set();
@@ -296,18 +295,17 @@ events.addEventListener('clear', () => {
   animalIds.clear();
   updateAnimalCount();
 });
+events.addEventListener('remove', (event) => {
+  try {
+    const { id } = JSON.parse(event.data);
+    const index = animals.findIndex((animal) => animal.id === id);
+    if (index >= 0) animals.splice(index, 1);
+    animalIds.delete(id);
+    updateAnimalCount();
+  } catch {
+    hud.textContent = 'Received an invalid removal';
+  }
+});
 events.addEventListener('error', () => {
   if (!animals.length) hud.textContent = 'Reconnecting to the sketchbook server…';
-});
-
-clearButton.addEventListener('click', async () => {
-  clearButton.disabled = true;
-  try {
-    const response = await fetch('/api/clear', { method: 'POST' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  } catch {
-    hud.textContent = 'Could not clear the safari';
-  } finally {
-    clearButton.disabled = false;
-  }
 });

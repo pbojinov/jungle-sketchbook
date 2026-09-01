@@ -7,15 +7,11 @@
     text { font-family: Arial, sans-serif; fill: #555; }
   </style>
 
-  <!-- Four unique registration markers: TL, TR, BR, BL. -->
-  <rect class="marker" x="36" y="36" width="54" height="54"/>
-  <rect fill="white" x="48" y="48" width="30" height="30"/>
-  <rect class="marker" x="750" y="36" width="54" height="54"/>
-  <circle fill="white" cx="777" cy="63" r="15"/>
-  <rect class="marker" x="750" y="1098" width="54" height="54"/>
-  <path fill="white" d="M765 1137l12-25 12 25z"/>
-  <rect class="marker" x="36" y="1098" width="54" height="54"/>
-  <path fill="white" d="M48 1110h30v30H48z M54 1116h18v18H54z" fill-rule="evenodd"/>
+  <!-- ArUco IDs 0–3: TL, TR, BR, BL. -->
+  <image href="/markers/0.svg" x="25" y="25" width="76" height="76"/>
+  <image href="/markers/1.svg" x="739" y="25" width="76" height="76"/>
+  <image href="/markers/2.svg" x="739" y="1087" width="76" height="76"/>
+  <image href="/markers/3.svg" x="25" y="1087" width="76" height="76"/>
 
   <text x="420" y="145" font-size="44" text-anchor="middle" font-weight="700">LIVE SKETCHBOOK — LION</text>
   <text x="420" y="190" font-size="22" text-anchor="middle">Color inside the lion. Leave the corner markers visible.</text>
@@ -74,5 +70,5 @@
   <path class="detail" d="M388 832 L418 832 M568 832 L600 832"/>
 
   <text x="420" y="1018" font-size="22" text-anchor="middle">Name: __________________________</text>
-  <text x="420" y="1060" font-size="16" text-anchor="middle">V0 prototype — manual corner selection</text>
+  <text x="420" y="1060" font-size="16" text-anchor="middle">Automatic markers with manual fallback</text>
 </svg>

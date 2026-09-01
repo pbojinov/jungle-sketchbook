@@ -20,9 +20,15 @@ const {
 
 const requestedSpecies = new URLSearchParams(window.location.search).get('species') || 'lion';
 const speciesDefinitions = window.AnimalShapes || {};
-const species = speciesDefinitions[requestedSpecies] ? requestedSpecies : 'lion';
-const shape = speciesDefinitions[species];
-const speciesName = species[0].toUpperCase() + species.slice(1);
+let species = speciesDefinitions[requestedSpecies] ? requestedSpecies : 'lion';
+let shape = speciesDefinitions[species];
+let speciesName = '';
+const markerDetector = window.AR
+  ? new window.AR.Detector({
+      dictionaryName: 'ARUCO_MIP_36h12',
+      maxHammingDistance: 5,
+    })
+  : null;
 
 const PAGE_WIDTH = 840;
 const PAGE_HEIGHT = 1188;
@@ -33,11 +39,21 @@ let selectedCorners = [];
 let displayScale = 1;
 let finalTexture = null;
 
-document.title = `Capture ${speciesName}`;
-pageTitle.textContent = `Capture ${species}`;
-previewTitle.textContent = `${speciesName} texture`;
-processButton.textContent = `✂️ Cut out ${species}`;
-sendButton.textContent = `${shape.emoji} Send to safari`;
+function configureSpecies(nextSpecies) {
+  if (!speciesDefinitions[nextSpecies]) return false;
+  species = nextSpecies;
+  shape = speciesDefinitions[species];
+  speciesName = species[0].toUpperCase() + species.slice(1);
+  document.title = `Capture ${speciesName}`;
+  pageTitle.textContent = `Capture ${species}`;
+  previewTitle.textContent = `${speciesName} texture`;
+  processButton.textContent = `✂️ Cut out ${species}`;
+  sendButton.textContent = `${shape.emoji} Send to safari`;
+  window.history.replaceState(null, '', `/capture.html?species=${species}`);
+  return true;
+}
+
+configureSpecies(species);
 
 function setStatus(message) {
   statusElement.textContent = message;
@@ -80,6 +96,66 @@ function redrawPhoto() {
   }
 }
 
+function cornersAreInsidePhoto(corners) {
+  return corners.every(
+    (corner) =>
+      corner.x >= 0 &&
+      corner.y >= 0 &&
+      corner.x <= photoCanvas.width &&
+      corner.y <= photoCanvas.height,
+  );
+}
+
+async function attemptAutomaticRegistration() {
+  if (!markerDetector || !window.SketchMarkers) {
+    setStatus('Automatic detection is unavailable. Tap the top-left corner.');
+    return;
+  }
+
+  setStatus('Looking for the four page markers…');
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  try {
+    const pixels = photoContext.getImageData(
+      0,
+      0,
+      photoCanvas.width,
+      photoCanvas.height,
+    );
+    const detectedMarkers = markerDetector.detect(pixels);
+    const registration = window.SketchMarkers.detectPage(
+      detectedMarkers,
+      window.SketchGeometry,
+    );
+
+    const validRegistration =
+      registration &&
+      configureSpecies(registration.species) &&
+      cornersAreInsidePhoto(registration.corners) &&
+      isValidQuadrilateral(
+        registration.corners,
+        photoCanvas.width,
+        photoCanvas.height,
+      );
+
+    if (!validRegistration) {
+      selectedCorners = [];
+      redrawPhoto();
+      setStatus('Markers were not clear enough. Tap the top-left corner.');
+      return;
+    }
+
+    selectedCorners = registration.corners;
+    redrawPhoto();
+    processButton.disabled = false;
+    setStatus(`${speciesName} page detected. Review the corners or cut it out.`);
+  } catch (error) {
+    selectedCorners = [];
+    redrawPhoto();
+    setStatus(`Automatic detection failed. Tap the top-left corner. (${error.message})`);
+  }
+}
+
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
   if (!file) return;
@@ -100,8 +176,8 @@ fileInput.addEventListener('change', () => {
     sendButton.disabled = true;
     resetPointsButton.disabled = false;
     redrawPhoto();
-    setStatus('Tap the top-left corner.');
     URL.revokeObjectURL(objectUrl);
+    attemptAutomaticRegistration();
   });
 
   image.addEventListener('error', () => {

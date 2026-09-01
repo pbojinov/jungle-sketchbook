@@ -128,6 +128,10 @@ migration option if query or multi-process requirements appear.
 - Assigns scale, speed, and vertical lane based on age.
 - Applies validated per-device motion, power, and connection-HUD preferences.
 - Reconnects automatically through the browser's EventSource implementation.
+- Builds a cached five-part lion from the exact submitted texture and animates
+  its head/mane, body, legs, and tail around declared pivots.
+- Disables articulation for reduced motion and falls back for unsupported
+  dimensions, runtime errors, or `?rig=off`.
 
 The background uses layered trunks, fronds, colored glows, and fireflies to echo
 the gallery's luminous teal-and-purple jungle while keeping submitted drawings

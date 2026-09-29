@@ -49,7 +49,7 @@
     C245 395 290 395 330 420 Z"/>
 
   <!-- Small forward-facing face inside the mane. -->
-  <path class="detail" d="M200 495
+  <path class="detail" data-color-part="face" d="M200 495
     C195 470 215 455 240 475
     C252 464 267 464 280 475
     C305 455 325 470 320 495
@@ -58,7 +58,7 @@
     C235 628 215 605 210 560 Z"/>
   <circle cx="235" cy="535" r="6" fill="#777"/>
   <circle cx="285" cy="535" r="6" fill="#777"/>
-  <ellipse class="detail" cx="260" cy="580" rx="35" ry="25"/>
+  <ellipse class="detail" data-color-part="muzzle" cx="260" cy="580" rx="35" ry="25"/>
   <path d="M250 567 L270 567 L260 579 Z" fill="#888"/>
   <path class="detail" d="M260 579 L260 590 M260 590 C247 603 235 599 230 590 M260 590 C273 603 285 599 290 590"/>
 

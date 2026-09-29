@@ -28,6 +28,7 @@ The server uses only Node's standard library. There is no install or build step.
 Run the small test suite with:
 
 ```bash
+node test/motion.js
 node test/geometry.js
 node test/lion-mask.js
 node test/fox-mask.js
@@ -85,8 +86,13 @@ Open these pages:
 6. Tap the page corners in this order: TL → TR → BR → BL.
 7. Select **Cut out**, inspect the previews, and select **Send to safari**.
 
-The display receives the PNG immediately. A new animal starts large in the
-foreground, later moves to smaller depth lanes, and eventually leaves the scene.
+The display receives the PNG immediately. A new drawing appears with a brief poof
+in the waiting area, then enters the foreground when there is room. After a short
+greeting pause (250–700 ms), it eases into a slow walk. Species-specific facing and
+articulated legs keep the scanned artwork moving forward, with lifted feet during
+each recovery step. Animals keep a fixed size and row for each pass. Only after walking fully
+offscreen do they reenter on the next smaller, hazier row. After the farthest
+row, they leave the scene. The display buttons add colored samples of all four species.
 
 ## Home deployment options
 
@@ -114,7 +120,11 @@ public/capture.html               Capture interface
 public/geometry.js                Tested homography and corner-validation math
 public/capture.js                 Photo, lion mask, and upload pipeline
 public/display.html               Fullscreen safari canvas
-public/display.js                 Scene and animal lifecycle
+public/display.js                 Animal lifecycle, arrivals, and live synchronization
+public/scene.js                   Layered jungle artwork and glowing orbs
+public/motion.js                  Species gait, pace, and spacing logic
+public/samples.js                 Colored sample artwork and legacy sample refresh
+public/demo.js                    Sample animal buttons
 public/styles.css                 Launcher/capture styles
 public/animals/lion/template.svg  Printable sheet and source geometry
 public/animals/lion/shape.js      Shared lion extraction mask and crop bounds
@@ -147,7 +157,7 @@ the server restarts.
 
 - Four animal species with fixed silhouettes
 - Manual page-corner selection
-- Simplified paper-cutout motion rather than a skeletal walk cycle
+- Simple articulated cutout legs; full-body species-specific rigs remain future work
 - No persistent storage, authentication, or access control
 - Intended only for a trusted home LAN; do not expose this server to the internet
 - The printed guide lines remain visible in the extracted artwork
@@ -173,3 +183,10 @@ the server restarts.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the validated system design, risks,
 and the recommended order of implementation.
+
+## Temporary phone preview
+
+Run `cloudflared tunnel --url http://localhost:8000` and open the generated HTTPS
+URL with `/display.html` on your phone. Quick Tunnel displays use polling because
+Quick Tunnels do not support Server-Sent Events. This is a temporary public
+development preview without authentication; stop the tunnel when finished.

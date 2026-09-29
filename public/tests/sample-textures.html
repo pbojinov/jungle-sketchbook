@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Sample texture checks</title>
+<pre id="result">Checking sample textures…</pre>
+<script src="/animals/lion/shape.js"></script><script src="/samples.js?v=1"></script>
+<script>
+(async () => {
+  const legacy = await sampleTexture('lion', true);
+  const current = await sampleTexture('lion');
+  if (legacy === current) throw new Error('Face update did not change the sample');
+  if (await refreshLegacySample('lion', legacy) !== current) throw new Error('Legacy sample was not upgraded');
+  if (await refreshLegacySample('lion', 'unrelated-photo') !== 'unrelated-photo') throw new Error('Unrelated artwork changed');
+  const animals = await (await fetch('/api/animals')).json();
+  const oldLions = animals.filter(a => a.species === 'lion' && a.texture === legacy);
+  for (const lion of oldLions) {
+    if (await refreshLegacySample(lion.species, lion.texture) !== current) throw new Error('Stored legacy lion did not upgrade');
+  }
+  document.querySelector('#result').textContent = `PASS: colored face differs, legacy samples upgrade, unrelated artwork preserved. ${oldLions.length} stored legacy lions matched and upgraded.`;
+})().catch(error => { document.querySelector('#result').textContent = `FAIL: ${error.message}`; });
+</script></html>

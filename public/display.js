@@ -2,6 +2,10 @@ const canvas = document.querySelector('#world');
 const context = canvas.getContext('2d');
 const hud = document.querySelector('#hud');
 const clearButton = document.querySelector('#clear');
+const arrivals = document.querySelector('#arrivals');
+const arrivalList = document.querySelector('#arrival-list');
+const arrivalCards = new Map();
+let arrivalOrder = 0;
 
 const animals = [];
 const animalIds = new Set();
@@ -18,20 +22,51 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+function updateArrivals() {
+  const waiting = animals.filter((animal) => animal.waiting && !animal.hasEntered && !animal.restored)
+    .sort((a, b) => a.order - b.order);
+  const ids = new Set(waiting.map((animal) => animal.id));
+  for (const [id, card] of arrivalCards) {
+    if (!ids.has(id)) { card.remove(); arrivalCards.delete(id); }
+  }
+  for (const [index, animal] of waiting.entries()) {
+    let card = arrivalCards.get(animal.id);
+    if (!card) {
+      card = document.createElement('div');
+      card.className = 'arrival';
+      card.setAttribute('role', 'listitem');
+      const picture = document.createElement('img');
+      picture.src = animal.image.src;
+      picture.alt = `Your ${animal.species}`;
+      card.append(picture, document.createElement('span'));
+      arrivalCards.set(animal.id, card);
+      arrivalList.append(card);
+      // Reveal the newest scan even when many people submit together.
+      arrivalList.scrollLeft = arrivalList.scrollWidth;
+    }
+    card.querySelector('span').textContent = index === 0 ? 'You’re next' : `Waiting · ${index + 1}`;
+  }
+  arrivals.hidden = waiting.length === 0;
+}
+
 function updateAnimalCount() {
+  updateArrivals();
   if (!animals.length) {
     hud.textContent = 'Live Sketchbook Safari · waiting for animals…';
     return;
   }
-  hud.textContent = `${animals.length} animal${animals.length === 1 ? '' : 's'} in the safari`;
+  const waiting = animals.filter((animal) => animal.waiting).length;
+  const visible = animals.length - waiting;
+  hud.textContent = `${visible} animal${visible === 1 ? '' : 's'} in the safari${waiting ? ` · ${waiting} waiting for space` : ''}`;
 }
 
-function addAnimal(data, restored = false) {
+async function addAnimal(data, restored = false) {
   if (!data || !data.id || animalIds.has(data.id) || typeof data.texture !== 'string') {
     return;
   }
 
   animalIds.add(data.id);
+  const order = arrivalOrder++;
   const loadGeneration = generation;
   const image = new Image();
 
@@ -41,15 +76,30 @@ function addAnimal(data, restored = false) {
       return;
     }
 
-    const direction = Math.random() < 0.5 ? 1 : -1;
+    const direction = SafariMotion.rowDirection(restored ? 1 : 0);
+    const species = SafariMotion.rigs[data.species] ? data.species : 'lion';
     animals.push({
       id: data.id,
+      order,
+      restored,
+      hasEntered: restored,
+      readyAt: performance.now() + (restored ? 0 : 450),
+      arrivalPause: 0.25 + Math.random() * 0.45,
+      tempo: 1,
+      tempoTarget: 1,
+      tempoIn: 0,
       image,
+      species,
       direction,
-      x: direction === 1 ? -image.width : window.innerWidth + image.width,
+      x: -1000,
+      waiting: true,
+      elapsed: 0,
+      gait: 0,
+      haze: makeHazeTexture(image),
       age: restored ? 25 : 0,
       phase: Math.random() * Math.PI * 2,
-      speed: 80 + Math.random() * 35,
+      speed: SafariMotion.preferredSpeed(species, Math.random()),
+      spacing: 0.75 + Math.random() * 0.7,
       layer: restored ? 1 : 0,
     });
 
@@ -65,173 +115,129 @@ function addAnimal(data, restored = false) {
     if (!animals.length) hud.textContent = 'Could not load an animal texture';
   });
 
-  image.src = data.texture;
+  try {
+    image.src = await refreshLegacySample(data.species, data.texture);
+  } catch {
+    image.src = data.texture;
+  }
 }
 
-function drawFrond(x, y, length, angle, color, sway) {
-  context.save();
-  context.translate(x, y);
-  context.rotate(angle + sway);
-  context.strokeStyle = color;
-  context.lineCap = 'round';
-  context.lineWidth = Math.max(2, length * 0.025);
-  context.beginPath();
-  context.moveTo(0, 0);
-  context.quadraticCurveTo(length * 0.45, -length * 0.12, length, 0);
-  context.stroke();
+function makeHazeTexture(image) {
+  const texture = document.createElement('canvas');
+  texture.width = image.width;
+  texture.height = image.height;
+  const paint = texture.getContext('2d');
+  paint.drawImage(image, 0, 0);
+  paint.globalCompositeOperation = 'source-in';
+  paint.fillStyle = '#9bb9b5';
+  paint.fillRect(0, 0, texture.width, texture.height);
+  return texture;
+}
 
-  for (let index = 1; index < 8; index += 1) {
-    const progress = index / 8;
-    const stemX = length * progress;
-    const leafLength = length * 0.28 * (1 - progress * 0.45);
-    context.lineWidth = Math.max(1.5, length * 0.017);
-    for (const side of [-1, 1]) {
-      context.beginPath();
-      context.moveTo(stemX, -length * 0.05 * Math.sin(progress * Math.PI));
-      context.quadraticCurveTo(
-        stemX - leafLength * 0.15,
-        side * leafLength * 0.35,
-        stemX - leafLength * 0.55,
-        side * leafLength,
-      );
-      context.stroke();
+function drawMist(width, height, lane, opacity) {
+  const top = 0;
+  const bottom = height * (lane + 0.055);
+  const mist = context.createLinearGradient(0, top, 0, bottom);
+  mist.addColorStop(0, `rgba(153, 187, 182, ${opacity * 0.3})`);
+  mist.addColorStop(0.4, `rgba(153, 187, 182, ${opacity * 0.8})`);
+  mist.addColorStop(0.7, `rgba(153, 187, 182, ${opacity})`);
+  mist.addColorStop(1, 'rgba(153, 187, 182, 0)');
+  context.fillStyle = mist;
+  context.fillRect(0, top, width, bottom - top);
+}
+
+function drawRig(animal, rig, movement, fog) {
+  const image = animal.image;
+  const ratioX = image.width / rig.width;
+  const ratioY = image.height / rig.height;
+  const hipY = rig.hip - rig.y;
+  const legLength = rig.foot - rig.hip;
+  const stride = legLength * 0.46;
+  function piece(sx, sy, sw, sh, dx, dy, dw, dh) {
+    context.drawImage(image, sx * ratioX, sy * ratioY, sw * ratioX, sh * ratioY, dx, dy, dw, dh);
+    if (fog > 0) {
+      const opacity = context.globalAlpha;
+      context.globalAlpha = opacity * fog;
+      context.drawImage(animal.haze, sx * ratioX, sy * ratioY, sw * ratioX, sh * ratioY, dx, dy, dw, dh);
+      context.globalAlpha = opacity;
     }
   }
-  context.restore();
-}
-
-function drawGlow(x, y, radius, color) {
-  const glow = context.createRadialGradient(x, y, 0, x, y, radius);
-  glow.addColorStop(0, color);
-  glow.addColorStop(1, 'transparent');
-  context.fillStyle = glow;
-  context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-}
-
-function drawTree(x, width, height, color) {
-  context.fillStyle = color;
-  context.beginPath();
-  context.moveTo(x - width * 0.55, height);
-  context.bezierCurveTo(
-    x - width * 0.2,
-    height * 0.72,
-    x - width * 0.45,
-    height * 0.4,
-    x - width * 0.15,
-    -20,
-  );
-  context.lineTo(x + width * 0.35, -20);
-  context.bezierCurveTo(
-    x + width * 0.1,
-    height * 0.42,
-    x + width * 0.48,
-    height * 0.72,
-    x + width * 0.55,
-    height,
-  );
-  context.closePath();
-  context.fill();
-}
-
-function drawBackground(width, height, time) {
-  const sky = context.createLinearGradient(0, 0, 0, height);
-  sky.addColorStop(0, '#08152c');
-  sky.addColorStop(0.48, '#10293a');
-  sky.addColorStop(0.76, '#073a39');
-  sky.addColorStop(1, '#061d28');
-  context.fillStyle = sky;
-  context.fillRect(0, 0, width, height);
-
-  drawGlow(width * 0.18, height * 0.5, height * 0.3, '#155d7088');
-  drawGlow(width * 0.78, height * 0.42, height * 0.26, '#5b256f66');
-
-  const treePositions = [0.08, 0.34, 0.68, 0.93];
-  treePositions.forEach((position, index) => {
-    drawTree(
-      width * position,
-      width * (0.08 + (index % 2) * 0.025),
-      height,
-      index % 2 ? '#09252a' : '#0a3034',
-    );
-  });
-
-  const sway = Math.sin(time * 0.00035) * 0.025;
-  for (let index = 0; index < 12; index += 1) {
-    const fromLeft = index % 2 === 0;
-    const x = fromLeft ? width * 0.03 : width * 0.97;
-    const y = height * (0.05 + (index % 6) * 0.075);
-    const angle = fromLeft ? -0.12 + index * 0.025 : Math.PI + 0.12 - index * 0.02;
-    const colors = ['#1f817e', '#3a8b87', '#6b3e8d', '#2e6e77'];
-    drawFrond(x, y, width * 0.16, angle, colors[index % colors.length], sway);
+  function leg(index, far) {
+    const [left, right] = rig.legs[index];
+    const legWidth = right - left;
+    const hipX = (left + right) / 2 - rig.x;
+    const step = SafariMotion.footstep(animal.gait + index * 0.5 + (far ? 0.25 : 0), stride, legLength * 0.17);
+    const dx = step.x * rig.facing * movement;
+    const dy = legLength * 0.96 - step.lift * movement;
+    const length = legLength / 2;
+    const distance = Math.min(Math.hypot(dx, dy), legLength - 0.01);
+    const bend = Math.sqrt(Math.max(0, length * length - distance * distance / 4));
+    const kneeX = dx / 2 + rig.facing * bend * dy / distance;
+    const kneeY = dy / 2 - rig.facing * bend * dx / distance;
+    context.save();
+    context.translate(hipX + (far ? -rig.facing * 9 : 0), hipY);
+    if (far) context.globalAlpha = 0.72;
+    function segment(x1, y1, x2, y2, sourceY, sourceHeight) {
+      context.save();
+      context.translate(x1, y1);
+      context.rotate(-Math.atan2(x2 - x1, y2 - y1));
+      piece(left - rig.x, sourceY, legWidth, sourceHeight,
+        -legWidth / 2, -1, legWidth, Math.hypot(x2 - x1, y2 - y1) + 2);
+      context.restore();
+    }
+    segment(0, 0, kneeX, kneeY, hipY, length);
+    segment(kneeX, kneeY, dx, dy, hipY + length, length + 3);
+    context.restore();
   }
-
-  context.fillStyle = '#082d35';
-  context.fillRect(0, height * 0.7, width, height * 0.3);
-
-  for (let index = 0; index < 34; index += 1) {
-    const x = ((index * 83) % 997) / 997 * width;
-    const baseY = (0.2 + ((index * 47) % 70) / 100) * height;
-    const y = baseY + Math.sin(time * 0.001 + index * 1.7) * 8;
-    const pulse = 1.5 + 1.4 * Math.sin(time * 0.002 + index);
-    context.fillStyle = index % 3 === 0 ? '#ffd88c' : '#75f8df';
-    context.globalAlpha = 0.45 + 0.35 * Math.sin(time * 0.0015 + index * 0.9);
-    context.beginPath();
-    context.arc(x, y, Math.max(0.8, pulse), 0, Math.PI * 2);
-    context.fill();
-  }
-  context.globalAlpha = 1;
-}
-
-function drawForeground(width, height, time) {
-  const colors = ['#235f63', '#71418e', '#267c77', '#a34389'];
-  const sway = Math.sin(time * 0.0005) * 0.035;
-  for (let index = 0; index < 10; index += 1) {
-    const x = width * (index / 9);
-    const y = height * (0.86 + (index % 2) * 0.05);
-    const length = height * (0.13 + (index % 3) * 0.025);
-    drawFrond(x, y, length, -Math.PI / 2, colors[index % colors.length], sway);
-  }
-
-  const grass = context.createLinearGradient(0, height * 0.82, 0, height);
-  grass.addColorStop(0, '#0d545499');
-  grass.addColorStop(1, '#04181f');
-  context.fillStyle = grass;
-  context.fillRect(0, height * 0.88, width, height * 0.12);
+  leg(0, true);
+  leg(1, true);
+  leg(0, false);
+  leg(1, false);
+  // Overlap the hips to avoid seams while keeping the original upper artwork.
+  piece(0, 0, rig.width, hipY + 5, 0, 0, rig.width, hipY + 5);
 }
 
 function drawAnimal(animal, width, height, deltaTime) {
+  if (animal.waiting) return;
   animal.age += deltaTime;
-  if (animal.age > 14 && animal.layer === 0) animal.layer = 1;
-  if (animal.age > 32 && animal.layer === 1) animal.layer = 2;
+  animal.elapsed += deltaTime;
+  SafariMotion.updateTempo(animal, deltaTime);
+  const depth = animal.layer;
+  const scale = SafariMotion.rowScale(depth, width);
+  const lane = 0.80 - depth * 0.145;
+  const movement = SafariMotion.pace(animal.elapsed, animal.arrivalPause);
+  const rig = SafariMotion.rigs[animal.species];
+  const distance = SafariMotion.travelDistance(animal, animals, width, deltaTime);
+  animal.x += distance * animal.direction;
+  // Match planted-foot motion to ground speed instead of a fixed timer.
+  animal.gait += distance * 0.62 / ((rig.foot - rig.hip) * 0.46 * scale);
+  const animalWidth = rig.width * scale;
+  const animalHeight = rig.height * scale;
+  const y = height * lane - animalHeight;
 
-  const scale = [0.42, 0.28, 0.18][animal.layer] * Math.min(width / 900, 1.5);
-  const lane = [0.69, 0.61, 0.55][animal.layer];
-  animal.x += animal.speed * deltaTime * animal.direction * (1 - 0.14 * animal.layer);
-
-  const animalWidth = animal.image.width * scale;
-  const animalHeight = animal.image.height * scale;
-  const y =
-    height * lane - animalHeight + Math.sin(animal.phase + animal.age * 5) * 5;
+  context.save();
+  context.globalAlpha = 0.13 * (1 - depth * 0.3);
+  context.fillStyle = '#001a20';
+  context.beginPath();
+  context.ellipse(animal.x + animalWidth * 0.5, height * lane - 4, animalWidth * 0.34, 5 * scale + 2, 0, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
 
   context.save();
   context.translate(animal.x, y);
-  if (animal.direction < 0) {
+  if (SafariMotion.shouldFlip(animal.species, animal.direction)) {
     context.translate(animalWidth, 0);
     context.scale(-1, 1);
   }
-  context.translate(animalWidth * 0.5, animalHeight * 0.5);
-  context.rotate(Math.sin(animal.phase + animal.age * 3) * 0.015);
-  context.translate(-animalWidth * 0.5, -animalHeight * 0.5);
-  context.drawImage(animal.image, 0, 0, animalWidth, animalHeight);
+  context.scale(scale, scale);
+  drawRig(animal, rig, movement, [0.025, 0.28, 0.46][depth]);
   context.restore();
 
-  const leftScene =
-    (animal.direction === 1 && animal.x > width + animalWidth * 2) ||
-    (animal.direction === -1 && animal.x < -animalWidth * 2);
-  if (leftScene) {
-    animal.x = animal.direction === 1 ? -animalWidth * 1.5 : width + animalWidth * 1.5;
-    animal.phase = Math.random() * Math.PI * 2;
-    if (animal.age > 55) animal.dead = true;
+  const nextPass = SafariMotion.nextPass(animal, width);
+  if (nextPass) {
+    Object.assign(animal, nextPass);
+    if (!animal.dead) animal.waiting = true;
+    updateAnimalCount();
   }
 }
 
@@ -242,16 +248,35 @@ function drawFrame(now) {
   const height = canvas.height / deviceScale;
 
   context.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
-  drawBackground(width, height, now);
+  JungleScene.background(context, width, height, now);
 
+  // Admit each row's oldest waiting animal first, after its welcome poof.
+  for (const layer of [0, 1, 2]) {
+    const animal = animals.filter((entry) => entry.waiting && entry.layer === layer)
+      .sort((a, b) => a.order - b.order)[0];
+    if (animal && now >= animal.readyAt && SafariMotion.canEnter(animal, animals, width)) {
+      animal.x = SafariMotion.entryPosition(animal, width);
+      animal.waiting = false;
+      animal.hasEntered = true;
+      animal.elapsed = animal.layer === 0 ? 0 : 10;
+      updateAnimalCount();
+    }
+  }
   animals.sort((first, second) => second.layer - first.layer);
-  animals.forEach((animal) => drawAnimal(animal, width, height, deltaTime));
-  drawForeground(width, height, now);
+  // Snapshot membership: exiting animals must not draw twice in the same frame.
+  const rows = [0, 1, 2].map((layer) => animals.filter((animal) => animal.layer === layer));
+  for (const layer of [2, 1, 0]) {
+    rows[layer].forEach((animal) => drawAnimal(animal, width, height, deltaTime));
+    // Composite mist AFTER its animals, BEFORE the closer row.
+    if (layer > 0) drawMist(width, height, 0.80 - layer * 0.145, layer === 2 ? 0.25 : 0.16);
+  }
+  JungleScene.foreground(context, width, height, now);
 
   for (let index = animals.length - 1; index >= 0; index -= 1) {
     if (animals[index].dead) {
       animalIds.delete(animals[index].id);
       animals.splice(index, 1);
+      updateAnimalCount();
     }
   }
 
@@ -260,36 +285,73 @@ function drawFrame(now) {
 
 requestAnimationFrame(drawFrame);
 
-fetch('/api/animals')
-  .then((response) => {
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
-  })
-  .then((savedAnimals) => savedAnimals.forEach((animal) => addAnimal(animal, true)))
-  .catch(() => {
-    hud.textContent = 'Display connected, but saved animals could not be loaded';
-  });
-
-const events = new EventSource('/api/events');
-events.addEventListener('open', () => {
-  if (!animals.length) updateAnimalCount();
-});
-events.addEventListener('animal', (event) => {
-  try {
-    addAnimal(JSON.parse(event.data));
-  } catch {
-    hud.textContent = 'Received an invalid animal';
-  }
-});
-events.addEventListener('clear', () => {
+function clearScene() {
   generation += 1;
   animals.length = 0;
   animalIds.clear();
   updateAnimalCount();
-});
-events.addEventListener('error', () => {
-  if (!animals.length) hud.textContent = 'Reconnecting to the sketchbook server…';
-});
+}
+
+if (location.hostname.endsWith('.trycloudflare.com')) {
+  // Quick Tunnels do not support SSE. Keep a separate seen set so animals
+  // that have finished their walk are not replayed on every poll.
+  const seen = new Set();
+  let initialized = false;
+  async function pollAnimals() {
+    try {
+      const response = await fetch('/api/animals', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const saved = await response.json();
+      if (initialized && saved.length === 0 && seen.size) {
+        clearScene();
+        seen.clear();
+      }
+      for (const animal of saved) {
+        if (seen.has(animal.id)) continue;
+        seen.add(animal.id);
+        addAnimal(animal, !initialized);
+      }
+      initialized = true;
+    } catch {
+      if (!animals.length) hud.textContent = 'Connecting to the sketchbook server…';
+    } finally {
+      setTimeout(pollAnimals, 1500);
+    }
+  }
+  pollAnimals();
+} else {
+  fetch('/api/animals')
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    })
+    .then((savedAnimals) => savedAnimals.forEach((animal) => addAnimal(animal, true)))
+    .catch(() => {
+      hud.textContent = 'Display connected, but saved animals could not be loaded';
+    });
+
+  const events = new EventSource('/api/events');
+  events.addEventListener('open', () => {
+    if (!animals.length) updateAnimalCount();
+  });
+  events.addEventListener('animal', (event) => {
+    try {
+      addAnimal(JSON.parse(event.data));
+    } catch {
+      hud.textContent = 'Received an invalid animal';
+    }
+  });
+  events.addEventListener('clear', () => {
+    generation += 1;
+    animals.length = 0;
+    animalIds.clear();
+    updateAnimalCount();
+  });
+  events.addEventListener('error', () => {
+    if (!animals.length) hud.textContent = 'Reconnecting to the sketchbook server…';
+  });
+
+}
 
 clearButton.addEventListener('click', async () => {
   clearButton.disabled = true;

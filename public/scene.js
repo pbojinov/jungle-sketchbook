@@ -184,7 +184,7 @@ const JungleScene = (() => {
   }
   function groundY(width,height,layer,x,controlsHeight=0) {
     const front=Math.min(height*.80,height-controlsHeight-158);
-    const spacing=Math.min(height*.145,Math.max(30,(front-height*.30)/2));
+    const spacing=Math.min(height*.11,Math.max(30,(front-height*.30)/2));
     const t=Math.max(0,Math.min(1,x/width));
     return front-layer*spacing + height*.008*Math.sin(t*Math.PI*2+layer*.7);
   }
@@ -235,25 +235,22 @@ const JungleScene = (() => {
       tree(ctx, width * fraction, height * (0.78 + (i % 2) * 0.07), Math.min(width, height) * (i % 2 ? 0.045 : 0.065),
         ['#08252d', i % 2 ? '#133c40' : '#154445', '#50817b'], 130 + i);
     });
-    // Overlapping irregular ground contours replace the hard horizontal floor edge.
-    for (let row = 0; row < 4; row++) {
-      const rear=groundY(width,height,1,width*.5,controlsHeight);
-      const middle=(rear+groundY(width,height,0,width*.5,controlsHeight))*.5;
-      const front=groundY(width,height,0,width*.5,controlsHeight);
-      const y=[rear-height*.065,rear-height*.025,middle-height*.03,front-height*.025][row];
-      const ground = ctx.createLinearGradient(0, y - 20, 0, height);
-      ground.addColorStop(0, ['#235354', '#194448', '#113a3e', '#08292f'][row]);
-      ground.addColorStop(1, '#061c26');
-      ctx.fillStyle = ground;
-      ctx.beginPath();ctx.moveTo(0, y + 12);
-      ctx.bezierCurveTo(width * 0.3, y - height * 0.025, width * 0.53, y + height * 0.045, width, y - height * 0.018);
-      ctx.lineTo(width, height);ctx.lineTo(0, height);ctx.fill();
-    }
+    // A continuous floor keeps shading from reading as an extra walking row.
+    // The forest edge sits one equal interval behind the rear trail.
+    const y=groundY(width,height,2,width*.5,controlsHeight);
+    const ground = ctx.createLinearGradient(0, y - 20, 0, height);
+    ground.addColorStop(0, '#235354');
+    ground.addColorStop(.3, '#153d41');
+    ground.addColorStop(1, '#061c26');
+    ctx.fillStyle = ground;
+    ctx.beginPath();ctx.moveTo(0, y + 12);
+    ctx.bezierCurveTo(width * 0.3, y - height * 0.025, width * 0.53, y + height * 0.045, width, y - height * 0.018);
+    ctx.lineTo(width, height);ctx.lineTo(0, height);ctx.fill();
     for(const layer of [1,0])walkingPath(ctx,width,height,layer,controlsHeight);
     // Moss and fallen leaves are low-contrast flecks, concentrated at the edges.
     for (let i = 0; i < 240; i++) {
       const x = rng() * width;
-      const horizon=groundY(width,height,1,x,controlsHeight)-height*.04;
+      const horizon=groundY(width,height,2,x,controlsHeight)+height*.015;
       const y = horizon + rng()*(height-horizon);
       ctx.globalAlpha = 0.08 + rng() * 0.12;
       ctx.fillStyle = ['#73a58a', '#588e86', '#91719b'][i % 3];

@@ -23,3 +23,5 @@ The two walking paths and animal foot baselines now share `groundY`, including v
 Visible foot contact is measured from texture alpha at load time, excluding transparent crop padding before positioning the animal on its path.
 
 There is one front row and one background row. The background admits at most three active animals, queuing subsequent passes until room opens. This keeps a large number of scans from forming a crowded distant pile.
+
+The forest edge and the two walking paths use the same vertical interval. Continuous floor shading replaces the extra contour bands, and the trail interval is 11% of viewport height (subject to the existing short-screen limit). This keeps the visible depth gaps consistent without introducing another animal row.

@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Capture Lion</title>
+    <title>Scan your animal · Jungle Sketchbook</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <main class="capture-layout">
-      <h1 id="captureTitle">Capture animal</h1>
+      <h1 id="captureTitle">Scan your animal</h1>
       <p class="instructions">
-        Use the new sheet or your original unmarked PDF. Photograph the full page, then tap its paper corners:
-        <b>top-left → top-right → bottom-right → bottom-left</b>.
+        Take a photo of your coloring sheet or choose one from your phone.
+        We’ll find the animal and line up the page. Include the full sheet if you can.
       </p>
 
       <div class="toolbar">
@@ -19,17 +19,41 @@
         <button id="takePhoto" type="button">📷 Take photo</button>
         <input id="fileInput" type="file" accept="image/*">
         <input id="cameraInput" type="file" accept="image/*" capture="environment">
-        <button id="wholeImage" disabled>Use whole image (flat scan)</button>
-        <button id="resetPoints" disabled>↩ Reset corners</button>
-        <button id="processBtn" disabled>✂️ Cut out animal</button>
-        <button id="sendBtn" class="primary" disabled>Send to safari</button>
         <a class="button secondary" href="/display.html" target="_blank">Open display</a>
+        <a class="button secondary" href="/print.html">Print a sheet</a>
       </div>
 
-      <div class="stage-wrap">
-        <canvas id="photoCanvas"></canvas>
+      <p id="animalResult" class="animal-result" hidden>
+        <span id="animalName"></span>
+        <button id="changeAnimal" type="button">Change animal</button>
+      </p>
+      <div id="animalChoice" class="animal-choice" hidden>
+        <label for="speciesSelect">Which animal is on your sheet?</label>
+        <select id="speciesSelect">
+          <option value="">Choose an animal</option>
+          <option value="elephant">🐘 Elephant</option>
+          <option value="giraffe">🦒 Giraffe</option>
+          <option value="lion">🦁 Lion</option>
+          <option value="monkey">🐒 Monkey</option>
+          <option value="tiger">🐯 Tiger</option>
+          <option value="zebra">🦓 Zebra</option>
+        </select>
       </div>
-      <div class="status" id="status" aria-live="polite"></div>
+
+      <section class="photo-editor" aria-label="Photo alignment">
+        <p id="photoHint" class="photo-hint">The page corners will appear here after you choose a photo.</p>
+        <div class="stage-wrap">
+          <canvas id="photoCanvas"></canvas>
+        </div>
+        <div class="toolbar photo-tools">
+          <button id="resetPoints" disabled>↩ Reset corners</button>
+          <button id="wholeImage" disabled>Use whole image (flat scan)</button>
+          <button id="detectAgain" disabled>Find corners automatically</button>
+          <button id="processBtn" disabled>✂️ Cut out animal</button>
+          <button id="sendBtn" class="primary" disabled>Send to safari</button>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </section>
 
       <div class="preview-row">
         <section class="preview-card">
@@ -37,7 +61,7 @@
           <canvas id="rectified" width="840" height="1087"></canvas>
         </section>
         <section class="preview-card">
-          <h3 id="animalPreviewTitle">Animal texture</h3>
+            <h3 id="animalPreviewTitle">Your animal</h3>
           <canvas id="cutout" width="840" height="1087"></canvas>
         </section>
       </div>
@@ -50,6 +74,6 @@
     <script src="/animals/tiger/shape.js?v=20260930"></script>
     <script src="/animals/zebra/shape.js?v=20260930"></script>
     <script src="/geometry.js"></script>
-    <script src="/capture.js?v=20261001-photo-options"></script>
+    <script src="/capture.js?v=20261001-auto-scan"></script>
   </body>
 </html>

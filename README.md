@@ -12,25 +12,43 @@ and colored demo animals.
 ## Run
 
 Requires Node.js 18 or newer. No npm installation or build is needed.
+Automatic scanning also needs Python 3 and OpenCV on the server:
 
 ```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-scan.txt
 node server.js
 ```
 
-Open the printed local or LAN URL. The launcher links to each capture station,
-printable sheet, and `/display.html`. The display has six sample-animal buttons.
+On Windows, use `.venv\Scripts\python.exe` for the pip command. The server finds
+the project virtual environment automatically; `SCANNER_PYTHON` can select another
+Python executable. Without OpenCV, capture still offers manual alignment.
+
+Open the printed local or LAN URL. The launcher has one **Scan your animal** entry point at
+`/capture.html`. Printing lives separately at `/print.html`, with individual sheets
+and a print-all PDF. `/display.html` has six sample-animal buttons.
 `/coloring-sheets.pdf` downloads all six sheets in one US Letter PDF.
 
 ## Color and scan
 
-1. Print the new PDF at actual size on US Letter, or use the supplied original
-   sheet. Animal positions match the original pages.
-2. Color it and open the matching animal's capture station on your phone.
-3. Select a photo showing the whole sheet. Tap the **paper corners** in order:
-   top-left, top-right, bottom-right, bottom-left. Printed markers are optional.
-4. For a flat scan already cropped to the entire page, use **Use whole image**.
-   This option does not automatically detect the animal or correct a tilted photo.
-5. Select **Cut out**, check alignment, then **Send to safari**.
+1. Print at actual size on US Letter. New sheets have four coded corner marks;
+   existing original sheets also work through artwork matching.
+2. Color it and open **Scan your animal** on your phone.
+3. Take a photo or choose an existing image. The server identifies the animal,
+   detects the page corners, and prepares the cutout automatically.
+4. Check the preview. Drag any corner to adjust it; **Reset corners** is beside
+   the image. **Change animal** allows correcting the identification.
+5. Select **Send to safari**. If detection is uncertain or unavailable, the page
+   asks for the animal and/or the four paper corners it still needs. For a flat
+   scan cropped to the page edges, **Use whole image** skips perspective detection.
+
+Photos are analyzed on your own server, with no external image service. New print
+marks encode both species and corner position. The detector can align a marked
+sheet with three visible marks; original sheets use SIFT artwork matching and a
+robust homography. A conservative paper-outline fallback handles clear page edges.
+Confidence is a heuristic, not a calibrated probability. Heavy glare, covered ink,
+folded sheets, and unfamiliar artwork can still require manual adjustment. See
+[scanning research and validation](SCANNING-RESEARCH.md).
 
 New arrivals appear with a poof in the waiting area, then enter as space opens.
 Each species has its own bending-leg gait, head/neck motion, tail sway and staggered
@@ -50,13 +68,16 @@ using these sheets; the old animal textures do not fit the new silhouettes.
 node test/artwork.js
 node test/motion.js
 node test/geometry.js
+node test/capture.js
+.venv/bin/python test/scanning.py
 node test/smoke.js
 node test/scene.js
 node test/display.js
 ```
 
 These cover vector assets, foot mesh bounds and orientation, direction, spacing,
-offscreen row transitions, perspective math, and the server/API contract.
+offscreen row transitions, perspective math, draggable corner behavior, marker/artwork detection, rejection
+of incomplete images, and the server/API contract including unavailable detection.
 `/tests/sample-textures.html` additionally checks sample rendering in a browser.
 `/tests/animal-animation.html` shows all six rigs together, with pause, scrub and
 hold-blink controls for visual inspection. WebGL renders the continuous mesh
@@ -72,6 +93,7 @@ Run from the repository:
 python3 tools/trace-source-art.py
 python3 tools/build-animal-assets.py
 python3 tools/build-coloring-pdf.py
+python3 scanning/build-references.py
 ```
 
 Tracing removes isolated scan specks and retains the main drawing. Sample color
@@ -79,17 +101,28 @@ regions and foot positions are calibrated to these exact six source PDFs; changi
 a source requires reviewing those settings. The final PDF is written to
 `output/pdf/jungle-coloring-sheets.pdf` and copied to the web folder.
 
+To change only the print marks, run `tools/build-print-templates.py` followed by
+`tools/build-coloring-pdf.py`. Rebuild `scanning/reference-features.npz` whenever
+the original artwork or its page placement changes. The cache avoids tracing
+all reference features on the first scan.
+
 ## Implementation
 
 - `server.js`: static files, in-memory animals, and live events.
-- `public/capture.js` / `geometry.js`: manual registration and silhouette extraction.
+- `public/capture.js` / `geometry.js`: automatic alignment, manual correction, and silhouette extraction.
+- `scanning/`: persistent local OpenCV worker, reference features, and print marks.
 - `public/animals/`: catalog, traced paths, shared crop/rig geometry, print templates.
 - `public/samples.js`: colored demo textures from the traced artwork.
 - `public/motion.js` / `rig.js`: pacing, spacing, and continuous foot deformation.
 - `public/display.js` / `scene.js`: arrivals, lifecycle, mist, and jungle scenery.
 
+`POST /api/detect` accepts `{image, species?}` with a JPEG/PNG data URL. It returns
+`identified`, `species`, `confident`, normalized `corners` in TL/TR/BR/BL order,
+`method`, and heuristic `score`. A detected animal can be retained even when
+its page alignment is uncertain. Missing dependencies return 503 for manual fallback.
+
 `POST /api/animals` accepts `{species, artworkVersion: "2026-09-artwork", texture}`,
-where texture is a PNG data URL. `GET /api/animals` returns up to 30 drawings;
+where texture is a PNG data URL. `GET /api/animals` returns up to 20 drawings;
 `GET /api/events` streams updates; `POST /api/clear` clears them.
 
 Data is held in memory and disappears when the server restarts. There is no

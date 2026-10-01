@@ -3,6 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
+const Scanner = require('./scanning/worker');
 
 const PORT = Number(process.env.PORT) || 8000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -11,6 +12,39 @@ const MAX_ANIMALS = 30;
 const SUPPORTED_SPECIES = new Set(Object.keys(require('./public/animals/catalog.json')));
 const clients = new Set();
 const animals = [];
+const scanner = new Scanner();
+
+async function handleDetection(req, res) {
+  let body = '';
+  let tooLarge = false;
+  req.setEncoding('utf8');
+  req.on('data', chunk => {
+    if (tooLarge) return;
+    body += chunk;
+    if (Buffer.byteLength(body) > MAX_BODY_BYTES) {
+      tooLarge = true;
+      body = '';
+      sendJson(res, 413, { error: 'Photo is too large. Try a smaller image.' });
+    }
+  });
+  req.on('end', async () => {
+    if (tooLarge) return;
+    let data;
+    try { data = JSON.parse(body); } catch {
+      sendJson(res, 400, { error: 'Expected a photo payload.' });
+      return;
+    }
+    if (!data || typeof data !== 'object' || typeof data.image !== 'string' || !/^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(data.image) ||
+        (data.species && !SUPPORTED_SPECIES.has(data.species))) {
+      sendJson(res, 400, { error: 'Expected a JPEG/PNG photo and an optional supported animal.' });
+      return;
+    }
+    try { sendJson(res, 200, await scanner.detect(data.image, data.species)); }
+    catch {
+      sendJson(res, 503, { error: 'Automatic detection is unavailable. You can still select the animal and align its corners.' });
+    }
+  });
+}
 
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -173,6 +207,10 @@ const server = http.createServer((req, res) => {
     handleAnimalUpload(req, res);
     return;
   }
+  if (req.method === 'POST' && url.pathname === '/api/detect') {
+    handleDetection(req, res);
+    return;
+  }
   if (req.method === 'POST' && url.pathname === '/api/clear') {
     animals.length = 0;
     broadcast('clear', {});
@@ -191,6 +229,8 @@ const server = http.createServer((req, res) => {
 server.on('clientError', (_error, socket) => {
   socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
+
+process.on('exit', () => scanner.close());
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Jungle Sketchbook: http://localhost:${PORT}`);

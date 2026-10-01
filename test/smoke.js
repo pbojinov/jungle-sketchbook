@@ -8,7 +8,7 @@ const baseUrl = `http://127.0.0.1:${port}`;
 const projectRoot = path.resolve(__dirname, '..');
 const server = spawn(process.execPath, ['server.js'], {
   cwd: projectRoot,
-  env: { ...process.env, PORT: String(port) },
+  env: { ...process.env, PORT: String(port), SCANNER_PYTHON: path.join(projectRoot, 'missing-test-python') },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 
@@ -45,6 +45,8 @@ async function run() {
   for (const pathname of [
     '/',
     '/capture.html?species=elephant',
+    '/capture.html',
+    '/print.html',
     '/display.html',
     '/animals/lion/template.svg',
     '/animals/elephant/template.svg',
@@ -77,6 +79,17 @@ async function run() {
 
   const onePixelPng =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  for (const payload of [null, {}, {image:'not-a-photo'}, {image:onePixelPng,species:'dinosaur'}]) {
+    response = await fetch(`${baseUrl}/api/detect`, {
+      body: JSON.stringify(payload), headers: {'Content-Type':'application/json'}, method:'POST',
+    });
+    assert.equal(response.status, 400, 'invalid detection input should be rejected');
+  }
+  response = await fetch(`${baseUrl}/api/detect`, {
+    body: JSON.stringify({image:onePixelPng}), headers: {'Content-Type':'application/json'}, method:'POST',
+  });
+  assert.equal(response.status, 503, 'missing scanner should allow the manual fallback');
+  assert.match((await response.json()).error, /align its corners/);
   response = await fetch(`${baseUrl}/api/animals`, {
     body: JSON.stringify({ species: 'lion', texture: onePixelPng }),
     headers: { 'Content-Type': 'application/json' }, method: 'POST',

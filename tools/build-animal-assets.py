@@ -2,6 +2,9 @@ from pathlib import Path
 import json,cv2,numpy as np,subprocess,xml.etree.ElementTree as ET
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
+import sys
+sys.path.insert(0, str(ROOT))
+from scanning.registration import template_svg
 animals=['elephant','giraffe','lion','monkey','tiger','zebra']
 emojis=dict(zip(animals,['🐘','🦒','🦁','🐒','🐯','🦓']))
 colors={'elephant':('#adbacb',{2:'#c6b8cc'}),'giraffe':('#efc875',{13:'#fff0c9',21:'#b37a47',25:'#b37a47',29:'#b37a47',32:'#b37a47',34:'#b37a47',36:'#b37a47',39:'#b37a47',41:'#b37a47',45:'#876145',46:'#876145',47:'#876145'}),'lion':('#e2aa53',{1:'#ad6737',10:'#f9d480',26:'#ffefca',16:'#ad6737',9:'#ecc99e',14:'#ecc99e'}),'monkey':('#a57c57',{4:'#f0d1a2',5:'#deb48b',8:'#deb48b',20:'#efd2ad',23:'#efd2ad',25:'#efd2ad'}),'tiger':('#e9a553',{36:'#fff0d3',44:'#fff0d3',4:'#ead0b0',10:'#ead0b0'}),'zebra':('#f8f3e8',{1:'#ead5d0',45:'#eddfce'})}
@@ -24,8 +27,7 @@ for species in animals:
  def inner(name):
   s=(folder/name).read_text();return s[s.index('<g'):s.rindex('</svg>')]
  ink=inner('ink.svg');mask=inner('mask.svg')
- markers=''.join(f'<rect x="{x}" y="{y}" width="28" height="28" fill="#111"/>' for x,y in [(22,22),(790,22),(790,1037),(22,1037)])
- template=f'<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 840 1087"><rect width="840" height="1087" fill="white"/>{markers}<text x="420" y="64" text-anchor="middle" font-family="sans-serif" font-size="24">JUNGLE SKETCHBOOK · {species.upper()}</text>{ink}<text x="420" y="1014" text-anchor="middle" font-family="sans-serif" font-size="17">Name: ____________________</text><text x="420" y="1059" text-anchor="middle" font-family="sans-serif" font-size="12">Print at actual size · Select the four paper corners when scanning</text></svg>'
+ template=template_svg(species, ink)
  (folder/'template.svg').write_text(template)
  img=cv2.imread(str(folder/'source-preview.png'),cv2.IMREAD_UNCHANGED)
  white=((img[:,:,0]>200)&(img[:,:,3]>0)).astype('uint8');_,labels,_,_=cv2.connectedComponentsWithStats(white)

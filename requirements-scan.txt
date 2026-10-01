@@ -1,0 +1,2 @@
+# Local automatic registration and animal recognition. No cloud service needed.
+opencv-python-headless>=4.10,<6

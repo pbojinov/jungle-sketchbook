@@ -1,5 +1,6 @@
 const wholeImageButton = document.querySelector('#wholeImage');
 const fileInput = document.querySelector('#fileInput');
+const cameraInput = document.querySelector('#cameraInput');
 const photoCanvas = document.querySelector('#photoCanvas');
 const photoContext = photoCanvas.getContext('2d');
 const rectifiedCanvas = document.querySelector('#rectified');
@@ -81,9 +82,14 @@ function redrawPhoto() {
   }
 }
 
-fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
+document.querySelector('#choosePhoto').addEventListener('click', () => fileInput.click());
+document.querySelector('#takePhoto').addEventListener('click', () => cameraInput.click());
+
+function loadPhoto(event) {
+  const input = event.currentTarget;
+  const file = input.files[0];
   if (!file) return;
+  input.value = '';
 
   const objectUrl = URL.createObjectURL(file);
   image = new Image();
@@ -119,7 +125,10 @@ fileInput.addEventListener('change', () => {
   });
 
   image.src = objectUrl;
-});
+}
+
+fileInput.addEventListener('change', loadPhoto);
+cameraInput.addEventListener('change', loadPhoto);
 
 wholeImageButton.addEventListener('click', () => {
   if (!image) return;

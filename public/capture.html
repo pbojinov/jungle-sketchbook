@@ -15,10 +15,10 @@
       </p>
 
       <div class="toolbar">
-        <label>
-          📷 Choose/take photo
-          <input id="fileInput" type="file" accept="image/*" capture="environment">
-        </label>
+        <button id="choosePhoto" type="button">🖼️ Choose from photos/files</button>
+        <button id="takePhoto" type="button">📷 Take photo</button>
+        <input id="fileInput" type="file" accept="image/*">
+        <input id="cameraInput" type="file" accept="image/*" capture="environment">
         <button id="wholeImage" disabled>Use whole image (flat scan)</button>
         <button id="resetPoints" disabled>↩ Reset corners</button>
         <button id="processBtn" disabled>✂️ Cut out animal</button>
@@ -50,6 +50,6 @@
     <script src="/animals/tiger/shape.js?v=20260930"></script>
     <script src="/animals/zebra/shape.js?v=20260930"></script>
     <script src="/geometry.js"></script>
-    <script src="/capture.js?v=20260930"></script>
+    <script src="/capture.js?v=20261001-photo-options"></script>
   </body>
 </html>

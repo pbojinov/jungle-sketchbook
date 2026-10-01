@@ -43,11 +43,11 @@ for (const layer of [0, 1, 2]) {
   for (const species of Object.keys(motion.rigs)) {
     const arrival = { species, layer, waiting: true };
     assert.ok(motion.canEnter(arrival, [], 900));
-    const leader = { species: 'gazelle', layer, x: motion.rowDirection(layer) === 1 ? 0 : 900, waiting: false };
+    const leader = { species: 'giraffe', layer, x: motion.rowDirection(layer) === 1 ? 0 : 900, waiting: false };
     assert.equal(motion.canEnter(arrival, [leader], 900), false, 'occupied entry must queue arrivals');
     leader.x = motion.rowDirection(layer) === 1
       ? motion.entryPosition(arrival, 900) + motion.rigs[species].width * motion.rowScale(layer, 900) + 109
-      : motion.entryPosition(arrival, 900) - motion.rigs.gazelle.width * motion.rowScale(layer, 900) - 109;
+      : motion.entryPosition(arrival, 900) - motion.rigs.giraffe.width * motion.rowScale(layer, 900) - 109;
     assert.ok(motion.canEnter(arrival, [leader], 900), 'release only after a full animal width plus gap');
   }
 }
@@ -57,20 +57,20 @@ for (const species of Object.keys(motion.rigs)) {
   assert.ok(motion.preferredSpeed(species, 0) > 25);
   assert.ok(motion.preferredSpeed(species, 1) < 31, 'variation stays subtle');
 }
-assert.ok(motion.preferredSpeed('gazelle') > motion.preferredSpeed('zebra'));
+assert.ok(motion.preferredSpeed('monkey') > motion.preferredSpeed('zebra'));
 assert.ok(motion.preferredSpeed('zebra') > motion.preferredSpeed('lion'));
-assert.ok(motion.preferredSpeed('lion') > motion.preferredSpeed('fox'));
+assert.ok(motion.preferredSpeed('lion') > motion.preferredSpeed('elephant'));
 for (const layer of [0, 1]) {
   const direction = motion.rowDirection(layer);
   const scale = motion.rowScale(layer, 900);
-  const follower = { species: 'gazelle', layer, direction, x: 0, speed: 31, elapsed: 10, phase: 0, spacing: 1 };
-  const leader = { species: 'fox', layer, direction, x: direction === 1 ? motion.rigs.gazelle.width * scale + 45 : -motion.rigs.fox.width * scale - 45 };
+  const follower = { species: 'giraffe', layer, direction, x: 0, speed: 31, elapsed: 10, phase: 0, spacing: 1 };
+  const leader = { species: 'elephant', layer, direction, x: direction === 1 ? motion.rigs.giraffe.width * scale + 45 : -motion.rigs.elephant.width * scale - 45 };
   const free = motion.travelDistance(follower, [follower], 900, 0.05);
   assert.ok(motion.travelDistance(follower, [follower, leader], 900, 0.05) < free, 'ease off near a slower leader');
   for (let frame = 0; frame < 1200; frame++) {
     follower.x += direction * motion.travelDistance(follower, [follower, leader], 900, 0.05);
   }
-  const gap = direction === 1 ? leader.x - follower.x - motion.rigs.gazelle.width * scale : follower.x - leader.x - motion.rigs.fox.width * scale;
+  const gap = direction === 1 ? leader.x - follower.x - motion.rigs.giraffe.width * scale : follower.x - leader.x - motion.rigs.elephant.width * scale;
   assert.ok(gap >= 31.49, 'never overlap even behind a stopped animal');
 }
 console.log('Variable pace and following-distance tests passed');

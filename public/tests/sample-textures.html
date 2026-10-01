@@ -1,18 +1,23 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><title>Sample texture checks</title>
 <pre id="result">Checking sample textures…</pre>
-<script src="/animals/lion/shape.js"></script><script src="/samples.js?v=1"></script>
+<script src="/samples.js?v=20260930"></script>
 <script>
 (async () => {
-  const legacy = await sampleTexture('lion', true);
-  const current = await sampleTexture('lion');
-  if (legacy === current) throw new Error('Face update did not change the sample');
-  if (await refreshLegacySample('lion', legacy) !== current) throw new Error('Legacy sample was not upgraded');
-  if (await refreshLegacySample('lion', 'unrelated-photo') !== 'unrelated-photo') throw new Error('Unrelated artwork changed');
-  const animals = await (await fetch('/api/animals')).json();
-  const oldLions = animals.filter(a => a.species === 'lion' && a.texture === legacy);
-  for (const lion of oldLions) {
-    if (await refreshLegacySample(lion.species, lion.texture) !== current) throw new Error('Stored legacy lion did not upgrade');
+  const catalog = await (await fetch('/animals/catalog.json')).json();
+  for (const species of Object.keys(catalog)) {
+    await new Promise((resolve,reject) => {
+      const script=document.createElement('script');script.src=`/animals/${species}/shape.js`;
+      script.onload=resolve;script.onerror=reject;document.head.append(script);
+    });
+    const texture = await sampleTexture(species);
+    const image = new Image();image.src=texture;await image.decode();
+    const bounds=AnimalShapes[species].bounds;
+    if(image.width!==bounds.width||image.height!==bounds.height) throw Error(`${species} crop mismatch`);
+    const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+    if(ctx.getImageData(0,0,1,1).data[3]!==0) throw Error(`${species} background is opaque`);
+    document.body.append(image);
   }
-  document.querySelector('#result').textContent = `PASS: colored face differs, legacy samples upgrade, unrelated artwork preserved. ${oldLions.length} stored legacy lions matched and upgraded.`;
+  document.querySelector('#result').textContent='PASS: all six samples load at matching crop dimensions with transparent backgrounds.';
 })().catch(error => { document.querySelector('#result').textContent = `FAIL: ${error.message}`; });
 </script></html>

@@ -9,7 +9,7 @@ document.querySelectorAll('[data-species]').forEach((demoButton) => {
       const upload = await fetch('/api/animals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ species, texture }),
+        body: JSON.stringify({ species, artworkVersion: AnimalShapes[species].version, texture }),
       });
       if (!upload.ok) throw new Error(`Could not add the ${species}`);
       demoButton.textContent = label;

@@ -1,5 +1,11 @@
 # Movement tuning
 
+September 30 artwork update: the current species factors are elephant 0.94×,
+giraffe 1.02×, lion 0.98×, monkey 1.04×, tiger 1.01×, and zebra 1.02×. These
+are artistic walking-pace choices, not measured walking speeds. The earlier
+research below describes the retired lineup. Faces stay rigid while a continuous
+foot mesh preserves the full drawing; gait follows distance traveled.
+
 Research checked September 28, 2026. These sources describe running capabilities,
 not directly comparable relaxed walking speeds:
 

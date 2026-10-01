@@ -1,5 +1,11 @@
 # Jungle Sketchbook Architecture
 
+Current artwork (September 2026): elephant, giraffe, lion, monkey, tiger, and
+zebra from the supplied PDFs. The canonical page is US Letter (840 × 1087).
+Continuous foot meshes are implemented in `public/rig.js`; unmarked originals
+use manual paper corners or the flat-scan whole-page option. The milestones
+below retain the original design history; see README.md for current behavior.
+
 ## Goal
 
 Create the museum moment at home: a child colors a known animal template, takes
@@ -41,7 +47,7 @@ browser, or a small native WebView wrapper without changing the capture pipeline
 2. The child colors inside the animal.
 3. The capture client obtains a photo from a phone camera or photo library.
 4. V0 asks the user for four page corners. V1 will detect the markers.
-5. A homography maps the photographed quadrilateral onto an 840 × 1188 canonical
+5. A homography maps the photographed quadrilateral onto an 840 × 1087 canonical
    page.
 6. The known species contour clips the canonical page to a transparent canvas.
 7. The cropped PNG is posted with species metadata to `POST /api/animals`.

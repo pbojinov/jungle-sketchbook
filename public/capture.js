@@ -1,3 +1,4 @@
+const wholeImageButton = document.querySelector('#wholeImage');
 const fileInput = document.querySelector('#fileInput');
 const photoCanvas = document.querySelector('#photoCanvas');
 const photoContext = photoCanvas.getContext('2d');
@@ -25,7 +26,7 @@ const shape = speciesDefinitions[species];
 const speciesName = species[0].toUpperCase() + species.slice(1);
 
 const PAGE_WIDTH = 840;
-const PAGE_HEIGHT = 1188;
+const PAGE_HEIGHT = 1087;
 const MAX_SOURCE_DIMENSION = 2400;
 
 let image = null;
@@ -99,6 +100,7 @@ fileInput.addEventListener('change', () => {
     processButton.disabled = true;
     sendButton.disabled = true;
     resetPointsButton.disabled = false;
+    wholeImageButton.disabled = false;
     redrawPhoto();
     setStatus('Tap the top-left corner.');
     URL.revokeObjectURL(objectUrl);
@@ -108,13 +110,29 @@ fileInput.addEventListener('change', () => {
     URL.revokeObjectURL(objectUrl);
     image = null;
     resetPointsButton.disabled = true;
+    wholeImageButton.disabled = true;
+    finalTexture = null;
+    processButton.disabled = true;
+    sendButton.disabled = true;
+    clearPreview();
     setStatus('Could not read that image. Try another photo.');
   });
 
   image.src = objectUrl;
 });
 
-photoCanvas.addEventListener('pointerdown', (event) => {
+wholeImageButton.addEventListener('click', () => {
+  if (!image) return;
+  selectedCorners = [{x:0,y:0},{x:photoCanvas.width-1,y:0},{x:photoCanvas.width-1,y:photoCanvas.height-1},{x:0,y:photoCanvas.height-1}];
+  finalTexture = null;
+  sendButton.disabled = true;
+  processButton.disabled = false;
+  clearPreview();
+  redrawPhoto();
+  setStatus('Whole page selected. Use this only for a flat, tightly cropped scan of the original page. Cut out to inspect alignment.');
+});
+
+photoCanvas.addEventListener('pointerdown' , (event) => {
   if (!image || selectedCorners.length >= 4) return;
 
   const bounds = photoCanvas.getBoundingClientRect();
@@ -227,7 +245,9 @@ function rectifyPage() {
 function makeAnimalCutout() {
   cutoutContext.clearRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
   cutoutContext.save();
-  cutoutContext.clip(new Path2D(shape.maskPath));
+  const mask = new Path2D();
+  mask.addPath(new Path2D(shape.maskPath), new DOMMatrix(shape.pathTransform));
+  cutoutContext.clip(mask);
   cutoutContext.drawImage(rectifiedCanvas, 0, 0);
   cutoutContext.restore();
 
@@ -270,7 +290,7 @@ sendButton.addEventListener('click', async () => {
     const response = await fetch('/api/animals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ species, texture: finalTexture }),
+      body: JSON.stringify({ species, artworkVersion: shape.version, texture: finalTexture }),
     });
     if (!response.ok) throw new Error(await response.text());
     setStatus(`${shape.emoji} Sent! Look at the safari display.`);

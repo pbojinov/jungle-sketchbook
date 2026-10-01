@@ -8,7 +8,7 @@ const PORT = Number(process.env.PORT) || 8000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BODY_BYTES = 5_000_000;
 const MAX_ANIMALS = 30;
-const SUPPORTED_SPECIES = new Set(['fox', 'gazelle', 'lion', 'zebra']);
+const SUPPORTED_SPECIES = new Set(Object.keys(require('./public/animals/catalog.json')));
 const clients = new Set();
 const animals = [];
 
@@ -18,6 +18,7 @@ const contentTypes = {
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
+  '.pdf': 'application/pdf',
   '.svg': 'image/svg+xml',
 };
 
@@ -114,11 +115,17 @@ function handleAnimalUpload(req, res) {
         return;
       }
 
+      if (data.artworkVersion !== '2026-09-artwork') {
+        sendJson(res, 409, { error: 'Animal artwork changed. Refresh the capture page and scan again.' });
+        return;
+      }
+
       const animal = {
         createdAt: Date.now(),
         id: crypto.randomUUID(),
         species: data.species,
         texture: data.texture,
+        artworkVersion: data.artworkVersion,
       };
       animals.push(animal);
       while (animals.length > MAX_ANIMALS) animals.shift();
@@ -186,7 +193,7 @@ server.on('clientError', (_error, socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Live Sketchbook V0: http://localhost:${PORT}`);
+  console.log(`Jungle Sketchbook: http://localhost:${PORT}`);
   try {
     for (const interfaces of Object.values(os.networkInterfaces())) {
       for (const address of interfaces || []) {

@@ -61,7 +61,8 @@ function updateAnimalCount() {
 }
 
 async function addAnimal(data, restored = false) {
-  if (!data || !data.id || animalIds.has(data.id) || typeof data.texture !== 'string') {
+  if (!data || !data.id || animalIds.has(data.id) || typeof data.texture !== 'string' ||
+      !SafariMotion.rigs[data.species] || data.artworkVersion !== '2026-09-artwork') {
     return;
   }
 
@@ -95,7 +96,8 @@ async function addAnimal(data, restored = false) {
       waiting: true,
       elapsed: 0,
       gait: 0,
-      haze: makeHazeTexture(image),
+      textures: [0.025, 0.28, 0.46].map(fog => makeHazeTexture(image, fog)),
+      mesh: AnimalRig.create(SafariMotion.rigs[species]),
       age: restored ? 25 : 0,
       phase: Math.random() * Math.PI * 2,
       speed: SafariMotion.preferredSpeed(species, Math.random()),
@@ -115,20 +117,17 @@ async function addAnimal(data, restored = false) {
     if (!animals.length) hud.textContent = 'Could not load an animal texture';
   });
 
-  try {
-    image.src = await refreshLegacySample(data.species, data.texture);
-  } catch {
-    image.src = data.texture;
-  }
+  image.src = data.texture;
 }
 
-function makeHazeTexture(image) {
+function makeHazeTexture(image, fog) {
   const texture = document.createElement('canvas');
   texture.width = image.width;
   texture.height = image.height;
   const paint = texture.getContext('2d');
   paint.drawImage(image, 0, 0);
-  paint.globalCompositeOperation = 'source-in';
+  paint.globalCompositeOperation = 'source-atop';
+  paint.globalAlpha = fog;
   paint.fillStyle = '#9bb9b5';
   paint.fillRect(0, 0, texture.width, texture.height);
   return texture;
@@ -146,57 +145,6 @@ function drawMist(width, height, lane, opacity) {
   context.fillRect(0, top, width, bottom - top);
 }
 
-function drawRig(animal, rig, movement, fog) {
-  const image = animal.image;
-  const ratioX = image.width / rig.width;
-  const ratioY = image.height / rig.height;
-  const hipY = rig.hip - rig.y;
-  const legLength = rig.foot - rig.hip;
-  const stride = legLength * 0.46;
-  function piece(sx, sy, sw, sh, dx, dy, dw, dh) {
-    context.drawImage(image, sx * ratioX, sy * ratioY, sw * ratioX, sh * ratioY, dx, dy, dw, dh);
-    if (fog > 0) {
-      const opacity = context.globalAlpha;
-      context.globalAlpha = opacity * fog;
-      context.drawImage(animal.haze, sx * ratioX, sy * ratioY, sw * ratioX, sh * ratioY, dx, dy, dw, dh);
-      context.globalAlpha = opacity;
-    }
-  }
-  function leg(index, far) {
-    const [left, right] = rig.legs[index];
-    const legWidth = right - left;
-    const hipX = (left + right) / 2 - rig.x;
-    const step = SafariMotion.footstep(animal.gait + index * 0.5 + (far ? 0.25 : 0), stride, legLength * 0.17);
-    const dx = step.x * rig.facing * movement;
-    const dy = legLength * 0.96 - step.lift * movement;
-    const length = legLength / 2;
-    const distance = Math.min(Math.hypot(dx, dy), legLength - 0.01);
-    const bend = Math.sqrt(Math.max(0, length * length - distance * distance / 4));
-    const kneeX = dx / 2 + rig.facing * bend * dy / distance;
-    const kneeY = dy / 2 - rig.facing * bend * dx / distance;
-    context.save();
-    context.translate(hipX + (far ? -rig.facing * 9 : 0), hipY);
-    if (far) context.globalAlpha = 0.72;
-    function segment(x1, y1, x2, y2, sourceY, sourceHeight) {
-      context.save();
-      context.translate(x1, y1);
-      context.rotate(-Math.atan2(x2 - x1, y2 - y1));
-      piece(left - rig.x, sourceY, legWidth, sourceHeight,
-        -legWidth / 2, -1, legWidth, Math.hypot(x2 - x1, y2 - y1) + 2);
-      context.restore();
-    }
-    segment(0, 0, kneeX, kneeY, hipY, length);
-    segment(kneeX, kneeY, dx, dy, hipY + length, length + 3);
-    context.restore();
-  }
-  leg(0, true);
-  leg(1, true);
-  leg(0, false);
-  leg(1, false);
-  // Overlap the hips to avoid seams while keeping the original upper artwork.
-  piece(0, 0, rig.width, hipY + 5, 0, 0, rig.width, hipY + 5);
-}
-
 function drawAnimal(animal, width, height, deltaTime) {
   if (animal.waiting) return;
   animal.age += deltaTime;
@@ -210,7 +158,7 @@ function drawAnimal(animal, width, height, deltaTime) {
   const distance = SafariMotion.travelDistance(animal, animals, width, deltaTime);
   animal.x += distance * animal.direction;
   // Match planted-foot motion to ground speed instead of a fixed timer.
-  animal.gait += distance * 0.62 / ((rig.foot - rig.hip) * 0.46 * scale);
+  animal.gait += distance * 0.62 / (AnimalRig.STRIDE * scale);
   const animalWidth = rig.width * scale;
   const animalHeight = rig.height * scale;
   const y = height * lane - animalHeight;
@@ -230,7 +178,7 @@ function drawAnimal(animal, width, height, deltaTime) {
     context.scale(-1, 1);
   }
   context.scale(scale, scale);
-  drawRig(animal, rig, movement, [0.025, 0.28, 0.46][depth]);
+  AnimalRig.draw(context, animal.textures[depth], rig, animal.mesh, animal.gait, movement);
   context.restore();
 
   const nextPass = SafariMotion.nextPass(animal, width);

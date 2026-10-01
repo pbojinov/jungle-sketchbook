@@ -44,12 +44,15 @@ async function run() {
 
   for (const pathname of [
     '/',
-    '/capture.html?species=fox',
+    '/capture.html?species=elephant',
     '/display.html',
     '/animals/lion/template.svg',
-    '/animals/fox/template.svg',
+    '/animals/elephant/template.svg',
+    '/animals/monkey/template.svg',
+    '/animals/tiger/template.svg',
+    '/coloring-sheets.pdf',
     '/animals/zebra/template.svg',
-    '/animals/gazelle/template.svg',
+    '/animals/giraffe/template.svg',
   ]) {
     const response = await fetch(`${baseUrl}${pathname}`);
     assert.equal(response.status, 200, `${pathname} should load`);
@@ -69,10 +72,15 @@ async function run() {
 
   const onePixelPng =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-  const supportedSpecies = ['lion', 'fox', 'zebra', 'gazelle'];
+  response = await fetch(`${baseUrl}/api/animals`, {
+    body: JSON.stringify({ species: 'lion', texture: onePixelPng }),
+    headers: { 'Content-Type': 'application/json' }, method: 'POST',
+  });
+  assert.equal(response.status, 409, 'old clients cannot submit a mismatched silhouette');
+  const supportedSpecies = ['elephant', 'giraffe', 'lion', 'monkey', 'tiger', 'zebra'];
   for (const species of supportedSpecies) {
     response = await fetch(`${baseUrl}/api/animals`, {
-      body: JSON.stringify({ species, texture: onePixelPng }),
+      body: JSON.stringify({ species, artworkVersion: '2026-09-artwork', texture: onePixelPng }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     });

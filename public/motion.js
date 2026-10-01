@@ -1,18 +1,18 @@
 (function (root, factory) {
-  const motion = factory();
+  const motion = factory(root);
   if (typeof module === 'object' && module.exports) module.exports = motion;
   else root.SafariMotion = motion;
-})(typeof globalThis === 'object' ? globalThis : this, function () {
+})(typeof globalThis === 'object' ? globalThis : this, function (root) {
   // Coordinates refer to the printed page; crops retain the child's pixels.
-  const rigs = {
-    lion: { facing: -1, x: 104, y: 387, width: 709, height: 471, hip: 742, foot: 850, legs: [[377, 444], [553, 623]] },
-    fox: { facing: -1, x: 108, y: 363, width: 695, height: 470, hip: 695, foot: 825, legs: [[298, 354], [484, 544]] },
-    zebra: { facing: 1, x: 168, y: 273, width: 555, height: 580, hip: 705, foot: 845, legs: [[268, 331], [448, 508]] },
-    gazelle: { facing: -1, x: 148, y: 193, width: 554, height: 665, hip: 680, foot: 850, legs: [[308, 358], [478, 528]] },
-  };
+  const definitions = typeof module === 'object' && module.exports
+    ? Object.fromEntries(['elephant','giraffe','lion','monkey','tiger','zebra'].map(name => [name,require(`./animals/${name}/shape.js`)]))
+    : root.AnimalShapes;
+  const rigs = Object.fromEntries(Object.entries(definitions).map(([name, shape]) => [name, {
+    ...shape.bounds, facing: shape.facing, feet: shape.feet, displayScale: shape.displayScale,
+  }]));
   const smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
   // Gentle artistic compression of running-speed differences, not measured walking speeds.
-  const speedFactors = { fox: 0.96, lion: 0.98, zebra: 1.02, gazelle: 1.06 };
+  const speedFactors = { elephant: 0.94, giraffe: 1.02, lion: 0.98, monkey: 1.04, tiger: 1.01, zebra: 1.02 };
   function preferredSpeed(species, individual = 0.5) {
     return 28 * speedFactors[species] * (0.98 + individual * 0.04);
   }

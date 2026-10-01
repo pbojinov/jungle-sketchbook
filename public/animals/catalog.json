@@ -1,0 +1,26 @@
+{
+  "elephant": {
+    "emoji": "\ud83d\udc18",
+    "version": "2026-09-artwork"
+  },
+  "giraffe": {
+    "emoji": "\ud83e\udd92",
+    "version": "2026-09-artwork"
+  },
+  "lion": {
+    "emoji": "\ud83e\udd81",
+    "version": "2026-09-artwork"
+  },
+  "monkey": {
+    "emoji": "\ud83d\udc12",
+    "version": "2026-09-artwork"
+  },
+  "tiger": {
+    "emoji": "\ud83d\udc2f",
+    "version": "2026-09-artwork"
+  },
+  "zebra": {
+    "emoji": "\ud83e\udd93",
+    "version": "2026-09-artwork"
+  }
+}

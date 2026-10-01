@@ -10,7 +10,7 @@
     <main class="capture-layout">
       <h1 id="captureTitle">Capture animal</h1>
       <p class="instructions">
-        <strong>V0:</strong> photograph the printed sheet, then tap the paper corners:
+        Use the new sheet or your original unmarked PDF. Photograph the full page, then tap its paper corners:
         <b>top-left → top-right → bottom-right → bottom-left</b>.
       </p>
 
@@ -19,6 +19,7 @@
           📷 Choose/take photo
           <input id="fileInput" type="file" accept="image/*" capture="environment">
         </label>
+        <button id="wholeImage" disabled>Use whole image (flat scan)</button>
         <button id="resetPoints" disabled>↩ Reset corners</button>
         <button id="processBtn" disabled>✂️ Cut out animal</button>
         <button id="sendBtn" class="primary" disabled>Send to safari</button>
@@ -32,21 +33,23 @@
 
       <div class="preview-row">
         <section class="preview-card">
-          <h3>Rectified A4 page</h3>
-          <canvas id="rectified" width="840" height="1188"></canvas>
+          <h3>Aligned coloring sheet</h3>
+          <canvas id="rectified" width="840" height="1087"></canvas>
         </section>
         <section class="preview-card">
           <h3 id="animalPreviewTitle">Animal texture</h3>
-          <canvas id="cutout" width="840" height="1188"></canvas>
+          <canvas id="cutout" width="840" height="1087"></canvas>
         </section>
       </div>
     </main>
 
+    <script src="/animals/elephant/shape.js?v=20260930"></script>
+    <script src="/animals/giraffe/shape.js?v=20260930"></script>
+    <script src="/animals/lion/shape.js?v=20260930"></script>
+    <script src="/animals/monkey/shape.js?v=20260930"></script>
+    <script src="/animals/tiger/shape.js?v=20260930"></script>
+    <script src="/animals/zebra/shape.js?v=20260930"></script>
     <script src="/geometry.js"></script>
-    <script src="/animals/lion/shape.js"></script>
-    <script src="/animals/fox/shape.js"></script>
-    <script src="/animals/zebra/shape.js"></script>
-    <script src="/animals/gazelle/shape.js"></script>
-    <script src="/capture.js"></script>
+    <script src="/capture.js?v=20260930"></script>
   </body>
 </html>

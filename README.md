@@ -7,6 +7,8 @@ monkey, tiger, and zebra**. The old V0 ZIP is not used. Source PDFs are preserve
 in `source-art/`; clean vector traces supply the printable sheets, silhouettes,
 and colored demo animals.
 
+<img width="890" height="992" alt="image" src="https://github.com/user-attachments/assets/988fb2bb-bdfa-468a-90e1-b2bcdb56e903" />
+
 ## Run
 
 Requires Node.js 18 or newer. No npm installation or build is needed.

@@ -31,9 +31,13 @@ printable sheet, and `/display.html`. The display has six sample-animal buttons.
 5. Select **Cut out**, check alignment, then **Send to safari**.
 
 New arrivals appear with a poof in the waiting area, then enter as space opens.
-Their feet deform the continuous drawing, preserving the face and the child's
-coloring. Speeds drift gently, with subtle artistic differences between species.
-Animals move to a smaller, hazier row only after exiting fully offscreen.
+Each species has its own bending-leg gait, head/neck motion, tail sway and staggered
+blinks; the elephant also sways its trunk. A continuous texture mesh preserves the
+child's ink and coloring. Queued arrivals begin entering at the edge as soon as a
+safe gap opens, with shorter greetings and a slightly quicker walking pace.
+Speeds still drift gently. Canopy leaves, rooted plants and hanging vines move in
+a slow breeze; background animation freezes for reduced-motion preferences.
+All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque.
 
 The new artwork has a version identifier. Refresh old capture/display tabs before
 using these sheets; the old animal textures do not fit the new silhouettes.
@@ -45,11 +49,16 @@ node test/artwork.js
 node test/motion.js
 node test/geometry.js
 node test/smoke.js
+node test/scene.js
+node test/display.js
 ```
 
 These cover vector assets, foot mesh bounds and orientation, direction, spacing,
 offscreen row transitions, perspective math, and the server/API contract.
 `/tests/sample-textures.html` additionally checks sample rendering in a browser.
+`/tests/animal-animation.html` shows all six rigs together, with pause, scrub and
+hold-blink controls for visual inspection. WebGL renders the continuous mesh
+without triangle seams; Canvas provides a fallback when WebGL is unavailable.
 
 ## Rebuild artwork
 

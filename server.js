@@ -79,7 +79,7 @@ function serveStatic(pathname, res) {
 
     const extension = path.extname(filePath).toLowerCase();
     res.writeHead(200, {
-      'Cache-Control': extension === '.html' ? 'no-store' : 'public, max-age=300',
+      'Cache-Control': ['.html', '.js', '.css'].includes(extension) ? 'no-store' : 'public, max-age=300',
       'Content-Type': contentTypes[extension] || 'application/octet-stream',
       'X-Content-Type-Options': 'nosniff',
     });

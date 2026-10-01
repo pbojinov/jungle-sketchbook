@@ -12,34 +12,35 @@ assert.equal(motion.pace(3.5), 1);
 for (const species of Object.keys(motion.rigs)) {
   const width = 900;
   for (const direction of [-1, 1]) {
-    for (const layer of [0, 1, 2]) {
+    for (const layer of [0, 1]) {
       const animalWidth = motion.rigs[species].width * motion.rowScale(layer, width);
       const animal = { species, direction, layer, x: direction === 1 ? width - 1 : 1 - animalWidth, age: 9999 };
       assert.equal(motion.nextPass(animal, width), null, 'visible animals must stay in their row regardless of age');
       animal.x = direction === 1 ? width + 100 : -animalWidth - 100;
       const next = motion.nextPass(animal, width);
-      if (layer === 2) {
+      if (layer === motion.rowCount-1) {
         assert.deepEqual(next, { dead: true }, 'last row exits permanently');
       } else {
         assert.equal(next.layer, layer + 1, 'advance exactly one row');
         const nextWidth = motion.rigs[species].width * motion.rowScale(next.layer, width);
-        assert.equal(next.direction, motion.rowDirection(next.layer));
+        assert.equal(next.direction, -direction);
         assert.ok(next.direction === 1 ? next.x + nextWidth < 0 : next.x > width, 'reenter entirely offscreen');
         assert.equal(motion.nextPass({ ...animal, ...next }, width), null, 'do not skip a row on reentry');
       }
     }
   }
 }
+assert.equal(motion.rowCount,2,'there is only one background walking row');
 const start = motion.footstep(0, 50, 15);
 const stance = motion.footstep(0.31, 50, 15);
 assert.equal(start.lift, 0);
 assert.equal(stance.lift, 0);
 assert.ok(stance.x < start.x, 'planted foot moves opposite travel');
-assert.ok(motion.footstep(0.81, 50, 15).lift > 14, 'foot lifts during recovery');
+assert.ok(motion.footstep(.86, 50, 15).lift > 14, 'foot lifts during recovery');
 assert.deepEqual(motion.footstep(1, 50, 15), start);
 console.log('Motion tests passed');
 
-for (const layer of [0, 1, 2]) {
+for (const layer of [0, 1]) {
   for (const species of Object.keys(motion.rigs)) {
     const arrival = { species, layer, waiting: true };
     assert.ok(motion.canEnter(arrival, [], 900));
@@ -54,8 +55,8 @@ for (const layer of [0, 1, 2]) {
 console.log('Arrival spacing tests passed');
 
 for (const species of Object.keys(motion.rigs)) {
-  assert.ok(motion.preferredSpeed(species, 0) > 25);
-  assert.ok(motion.preferredSpeed(species, 1) < 31, 'variation stays subtle');
+  assert.ok(motion.preferredSpeed(species, 0) > 32);
+  assert.ok(motion.preferredSpeed(species, 1) < 39, 'variation stays subtle');
 }
 assert.ok(motion.preferredSpeed('monkey') > motion.preferredSpeed('zebra'));
 assert.ok(motion.preferredSpeed('zebra') > motion.preferredSpeed('lion'));
@@ -86,3 +87,56 @@ for (let frame = 0; frame < 1200; frame++) {
 assert.equal(motion.pace(2, 3), 0, 'individual greeting pause is respected');
 assert.equal(motion.pace(5, 3), 1);
 console.log('Smooth random tempo tests passed');
+
+// Queue admission is measured in seconds and still preserves physical spacing.
+for(const width of [450,900,1500]) for(const species of Object.keys(motion.rigs)) {
+  const leader={species:'elephant',layer:0,direction:1,x:24,speed:motion.preferredSpeed('elephant'),elapsed:0,arrivalPause:.2,spacing:1};
+  const next={species,layer:0,waiting:true,entryFromQueue:true,spacing:1};
+  let seconds=0;
+  while(!motion.canEnter(next,[leader],width)&&seconds<20){
+    const dt=1/60;leader.elapsed+=dt;
+    leader.x+=motion.travelDistance(leader,[leader],width,dt);seconds+=dt;
+  }
+  assert.ok(seconds<4,`${species} starts entering promptly at ${width}px (${seconds.toFixed(2)}s)`);
+  const right=motion.entryPosition(next,width)+motion.rigs[species].width*motion.rowScale(0,width);
+  assert.ok(right<width*.15+24,'only the leading portion enters initially');
+  assert.ok(leader.x-right>=Math.max(28,width*.035),'admission keeps a safe gap');
+}
+console.log('Faster queued arrivals passed at phone, desktop and wide viewport sizes');
+
+for(let order=0;order<12;order++) {
+ const plan=motion.arrivalPlan(order,12,()=>.5);
+ assert.equal(plan.layer,0);
+ assert.equal(plan.direction,order%2 ? 1 : -1,'a continual queue uses both edges');
+}
+assert.ok(motion.arrivalPlan(0,0,()=>1).spacing>motion.arrivalPlan(0,12,()=>1).spacing,'busy scan queues use closer gaps');
+assert.ok(motion.arrivalPlan(0,0,()=>1).spacing-motion.arrivalPlan(0,0,()=>0).spacing>1.5,'quiet arrivals have visibly varied gaps');
+for(const direction of [-1,1]) {
+ const walker={species:'elephant',layer:0,direction,x:300,speed:36,elapsed:10,spacing:1};
+ const opposite={...walker,direction:-direction,x:direction===1 ? 400 : 200};
+ assert.equal(motion.travelDistance(walker,[walker,opposite],900,.05),motion.travelDistance(walker,[walker],900,.05),'opposing tracks can pass without blocking');
+ assert.ok(motion.canEnter({...walker,waiting:true},[opposite],900),'both sides can enter the front row');
+}
+// Ground speed and stance speed must cancel, including at lift-off/landing.
+for(const stance of [.70,.72,.74,.76]) {
+ const stride=50,scale=.42,travel=8,start=.1;
+ const before=motion.footstep(start,stride,20,stance);
+ const after=motion.footstep(start+travel*stance/(stride*scale),stride,20,stance);
+ assert.ok(Math.abs(travel+(after.x-before.x)*scale)<1e-8,'a planted foot stays fixed in world space');
+ for(const boundary of [stance,1]) {
+  const e=.000001;
+  const centre=motion.footstep(boundary,stride,20,stance);
+  const left=motion.footstep(boundary-e,stride,20,stance);
+  const right=motion.footstep(boundary+e,stride,20,stance);
+  assert.ok(Math.abs((centre.x-left.x)/e-(right.x-centre.x)/e)<.01,'contact has no horizontal velocity snap');
+  assert.ok(left.lift+right.lift<.000001,'lift-off and landing have zero vertical velocity');
+ }
+}
+console.log('Two-way traffic, variable scan spacing and continuous planted-foot motion passed');
+
+const rearArrival={species:'elephant',layer:1,direction:1,waiting:true};
+const rearCrowd=[300,550,800].map(x=>({species:'elephant',layer:1,direction:1,x}));
+assert.equal(motion.canEnter(rearArrival,rearCrowd,900),false,'background row is limited to three active animals');
+rearCrowd[0].dead=true;
+assert.ok(motion.canEnter(rearArrival,rearCrowd,900),'background queue resumes when an animal finishes');
+console.log('Background crowd limit passed');

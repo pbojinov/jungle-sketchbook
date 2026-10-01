@@ -58,6 +58,11 @@ async function run() {
     assert.equal(response.status, 200, `${pathname} should load`);
   }
 
+  for (const pathname of ['/display.html', '/display.js', '/scene.js', '/styles.css']) {
+    const response = await fetch(`${baseUrl}${pathname}`);
+    if (response.ok) assert.equal(response.headers.get('cache-control'), 'no-store', 'live code cannot remain cached');
+  }
+
   assert.equal(await requestRaw('/%2e%2e%2fserver.js'), 403, 'path traversal should be blocked');
 
   let response = await fetch(`${baseUrl}/api/animals`);

@@ -141,7 +141,70 @@ const JungleScene = (() => {
     }
     return canvas;
   }
-  function build(width, height) {
+  // One slow breeze drives the foliage, with a delayed response at each depth.
+  // Amplitudes are in radians; the camera, trunks and ground remain steady.
+  function breeze(seconds, phase=0) {
+    return Math.sin(seconds*.50+phase)*.65 + Math.sin(seconds*.21+phase*.7)*.25
+      + Math.sin(seconds*1.15+phase*1.3)*.10;
+  }
+  function leafSprite(length,breadth,palette,detail=true) {
+    const [canvas,ctx]=surface(length*2,length*2);
+    leaf(ctx,length,length,length,breadth,0,palette,detail);
+    return canvas;
+  }
+  function canopyLeaf(ctx,item,seconds) {
+    const sway=breeze(seconds,item.phase)*item.flex;
+    const flutter=Math.sin(seconds*1.4+item.phase)*.012;
+    ctx.save();ctx.translate(item.x,item.y);ctx.rotate(item.angle+sway+flutter);
+    // The petiole stays fixed; tips move farther than the base.
+    ctx.transform(1,0,breeze(seconds-.6,item.phase)*.026,1,0,0);
+    ctx.drawImage(item.sprite,-item.length,-item.length);ctx.restore();
+  }
+  function vinePoint(item,t,seconds) {
+    const u=1-t;
+    const curve=-24*3*u*u*t + 20*3*u*t*t - 5*t*t*t;
+    const swing=breeze(seconds-t*.8,item.phase)*item.flex*t*t;
+    return {x:item.x+curve+swing,y:-5+(item.length+5)*t};
+  }
+  function vine(ctx,item,seconds) {
+    ctx.strokeStyle='#327067';ctx.lineWidth=1.2;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++) {
+      const p=vinePoint(item,i/20,seconds);
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+    }
+    ctx.stroke();
+    item.leaves.forEach((blade,i)=>{
+      const p=vinePoint(item,blade.t,seconds), q=vinePoint(item,Math.min(1,blade.t+.01),seconds);
+      const lean=-Math.atan2(q.x-p.x,q.y-p.y);
+      ctx.save();ctx.translate(p.x,p.y);
+      ctx.rotate(blade.angle+lean+breeze(seconds-.8,item.phase+i*.6)*.06);
+      ctx.drawImage(blade.sprite,-blade.length,-blade.length);ctx.restore();
+    });
+  }
+  function groundY(width,height,layer,x,controlsHeight=0) {
+    const front=Math.min(height*.80,height-controlsHeight-158);
+    const spacing=Math.min(height*.145,Math.max(30,(front-height*.30)/2));
+    const t=Math.max(0,Math.min(1,x/width));
+    return front-layer*spacing + height*.008*Math.sin(t*Math.PI*2+layer*.7);
+  }
+  function walkingPath(ctx,width,height,layer,controlsHeight) {
+    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    const points=()=>{
+      ctx.beginPath();
+      for(let i=0;i<=48;i++){
+        const x=width*i/48,y=groundY(width,height,layer,x,controlsHeight);
+        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+    };
+    // A broad, softly lit trail with a narrower worn centre; shadows sit on it.
+    const breadth=height*(.042-layer*.009);
+    ctx.strokeStyle=['#416c5b','#3f6557','#46675e'][layer];ctx.globalAlpha=.27;
+    ctx.lineWidth=breadth;points();ctx.stroke();
+    ctx.strokeStyle='#8b9d7940';ctx.lineWidth=breadth*.42;points();ctx.stroke();
+    ctx.restore();
+  }
+  function build(width, height, controlsHeight=0) {
     const [back, ctx] = surface(width, height);
     const rng = random(4189);
     const sky = ctx.createLinearGradient(0, 0, 0, height);
@@ -174,7 +237,10 @@ const JungleScene = (() => {
     });
     // Overlapping irregular ground contours replace the hard horizontal floor edge.
     for (let row = 0; row < 4; row++) {
-      const y = height * (0.53 + row * 0.115);
+      const rear=groundY(width,height,1,width*.5,controlsHeight);
+      const middle=(rear+groundY(width,height,0,width*.5,controlsHeight))*.5;
+      const front=groundY(width,height,0,width*.5,controlsHeight);
+      const y=[rear-height*.065,rear-height*.025,middle-height*.03,front-height*.025][row];
       const ground = ctx.createLinearGradient(0, y - 20, 0, height);
       ground.addColorStop(0, ['#235354', '#194448', '#113a3e', '#08292f'][row]);
       ground.addColorStop(1, '#061c26');
@@ -183,29 +249,35 @@ const JungleScene = (() => {
       ctx.bezierCurveTo(width * 0.3, y - height * 0.025, width * 0.53, y + height * 0.045, width, y - height * 0.018);
       ctx.lineTo(width, height);ctx.lineTo(0, height);ctx.fill();
     }
+    for(const layer of [1,0])walkingPath(ctx,width,height,layer,controlsHeight);
     // Moss and fallen leaves are low-contrast flecks, concentrated at the edges.
     for (let i = 0; i < 240; i++) {
       const x = rng() * width;
-      const y = height * (0.58 + rng() * 0.41);
+      const horizon=groundY(width,height,1,x,controlsHeight)-height*.04;
+      const y = horizon + rng()*(height-horizon);
       ctx.globalAlpha = 0.08 + rng() * 0.12;
       ctx.fillStyle = ['#73a58a', '#588e86', '#91719b'][i % 3];
       ctx.beginPath();ctx.ellipse(x, y, 1 + rng() * 6, 0.5 + rng() * 1.2, rng() * 2, 0, Math.PI * 2);ctx.fill();
     }
     ctx.globalAlpha = 1;
-    // A dense upper canopy with individually oriented broad leaves.
-    for (let i = 0; i < 36; i++) {
-      const x = (i / 35) * width;
-      const length = Math.min(width, height) * (0.1 + rng() * 0.15);
-      leaf(ctx, x, -12 - rng() * 20, length, length * (0.18 + rng() * 0.16), Math.PI + (rng() - 0.5) * 1.4,
-        palettes[i % 4]);
+    const canopy=[], vines=[];
+    // Render each blade once, then animate it around its own attachment point.
+    for(let i=0;i<36;i++) {
+      const x=i/35*width,y=-12-rng()*20;
+      const length=Math.min(width,height)*(.1+rng()*.15);
+      const breadth=length*(.18+rng()*.16),angle=Math.PI+(rng()-.5)*1.4;
+      canopy.push({x,y,length,angle,phase:i*.73,flex:.06+rng()*.025,
+        sprite:leafSprite(length,breadth,palettes[i%4])});
     }
-    // Draping vines with sparse pairs of small leaves.
-    for (let i = 0; i < 7; i++) {
-      const x = width * [0.08, 0.18, 0.31, 0.65, 0.81, 0.88, 0.98][i];
-      const length = height * (0.15 + rng() * 0.2);
-      ctx.strokeStyle = '#327067';ctx.lineWidth = 1.2;
-      ctx.beginPath();ctx.moveTo(x, -5);ctx.bezierCurveTo(x - 24, length * 0.4, x + 20, length * 0.7, x - 5, length);ctx.stroke();
-      for (let j = 1; j < 7; j++) leaf(ctx, x + Math.sin(j) * 6, length * j / 7, 18 + rng() * 14, 8, j % 2 ? -1.3 : 1.3, palettes[i % 2], false);
+    for(let i=0;i<7;i++) {
+      const x=width*[.08,.18,.31,.65,.81,.88,.98][i];
+      const length=height*(.22+rng()*.23),leaves=[];
+      for(let j=1;j<7;j++) {
+        const size=18+rng()*14;
+        leaves.push({t:j/7,length:size,angle:j%2?-1.3:1.3,
+          sprite:leafSprite(size,8,palettes[i%2],false)});
+      }
+      vines.push({x,length,leaves,phase:i*1.13,flex:Math.min(width,height)*(.024+rng()*.012)});
     }
     const sprites = palettes.map((palette, i) => ({ fern: plantSprite('fern', 72 + i, palette), broad: plantSprite('broad', 91 + i, palette) }));
     const plants = [];
@@ -218,20 +290,26 @@ const JungleScene = (() => {
       [0.99, 1.12, 0.5, 3, 'broad'], [1.075, 1.0, 0.54, 0, 'fern'],
     ];
     positions.forEach(([x, y, size, palette, kind], i) => {
-      plants.push({ x: x * width, y: y * height, size: size * Math.min(width, height), sprite: sprites[palette][kind], phase: i * 1.7, front: i >= 4 });
+      plants.push({ x: x * width, y: y * height, size: size * Math.min(width, height), sprite: sprites[palette][kind], phase: i * 1.7, kind, front: i >= 4 });
     });
-    cache = { width, height, back, plants };
+    cache = { width, height, controlsHeight, back, plants, canopy, vines };
   }
   function plant(ctx, item, time) {
     ctx.save();ctx.translate(item.x, item.y);
-    ctx.rotate(Math.sin(time * 0.00038 + item.phase) * 0.014);
-    ctx.drawImage(item.sprite, -item.size / 2, -item.size, item.size, item.size);
+    const seconds=time/1000;
+    const flex=item.front ? .055 : .043;
+    ctx.rotate(breeze(seconds,item.phase)*flex);
+    ctx.transform(1,0,breeze(seconds-.7,item.phase)*flex*.6,1,0,0);
+    const rootY=item.kind === 'fern' ? 400 : 410;
+    ctx.drawImage(item.sprite, -item.size / 2, -item.size*rootY/420, item.size, item.size);
     ctx.restore();
   }
-  function background(ctx, width, height, time) {
-    if (!cache || cache.width !== width || cache.height !== height) build(width, height);
+  function background(ctx, width, height, time, controlsHeight=0) {
+    if (!cache || cache.width !== width || cache.height !== height || cache.controlsHeight !== controlsHeight) build(width, height,controlsHeight);
     const clock = reducedMotion.matches ? 0 : time;
     ctx.drawImage(cache.back, 0, 0);
+    cache.vines.forEach(item=>vine(ctx,item,clock/1000));
+    cache.canopy.forEach(item=>canopyLeaf(ctx,item,clock/1000));
     cache.plants.filter(p => !p.front).forEach(p => plant(ctx, p, clock));
     // Retain the floating mint and amber orbs, now with soft halos and slow drift.
     for (let i = 0; i < 42; i++) {
@@ -246,13 +324,13 @@ const JungleScene = (() => {
     }
     ctx.globalAlpha = 1;
   }
-  function foreground(ctx, width, height, time) {
-    if (!cache || cache.width !== width || cache.height !== height) build(width, height);
+  function foreground(ctx, width, height, time, controlsHeight=0) {
+    if (!cache || cache.width !== width || cache.height !== height || cache.controlsHeight !== controlsHeight) build(width, height,controlsHeight);
     cache.plants.filter(p => p.front).forEach(p => plant(ctx, p, reducedMotion.matches ? 0 : time));
     const vignette = ctx.createRadialGradient(width * 0.5, height * 0.47, Math.min(width, height) * 0.22,
       width * 0.5, height * 0.47, Math.max(width, height) * 0.72);
     vignette.addColorStop(0, 'transparent');vignette.addColorStop(1, '#020e1a99');
     ctx.fillStyle = vignette;ctx.fillRect(0, 0, width, height);
   }
-  return { background, foreground };
+  return { background, foreground, breeze, vinePoint, groundY };
 })();

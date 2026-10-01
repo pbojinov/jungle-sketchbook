@@ -2,7 +2,8 @@
 
 Current artwork (September 2026): elephant, giraffe, lion, monkey, tiger, and
 zebra from the supplied PDFs. The canonical page is US Letter (840 × 1087).
-Continuous foot meshes are implemented in `public/rig.js`; unmarked originals
+Continuous meshes for species-specific legs, heads, tails and blinking are
+implemented in `public/rig.js`; unmarked originals
 use manual paper corners or the flat-scan whole-page option. The milestones
 below retain the original design history; see README.md for current behavior.
 
@@ -120,14 +121,13 @@ on-disk directory containing PNG files plus metadata.
 - Restores recent server state when the page opens.
 - Deduplicates animals by server-generated ID.
 - Receives new submissions in real time.
-- Randomizes direction, speed, and animation phase.
-- Assigns scale, speed, and vertical lane based on age.
+- Alternates entry sides even under continuous scan traffic; varies spacing, speed, greeting pauses and animation phase.
+- Starts saved and new drawings on the front row, then advances to one smaller background pass only after an offscreen exit. The background admits at most three active drawings.
 - Reconnects automatically through the browser's EventSource implementation.
 
 The background uses layered trunks, fronds, colored glows, and fireflies to echo
 the gallery's luminous teal-and-purple jungle while keeping submitted drawings
-visually dominant. Canvas 2D is enough to validate the experience. A future deformable animal can
-use Three.js, PixiJS, or another WebGL renderer while keeping the API unchanged.
+visually dominant. Canvas 2D composites the scene. `public/rig.js` uses a shared WebGL mesh renderer with fixed-length leg chains, weighted texture deformation, grounded foot targets and a Canvas fallback. The capture API remains unchanged.
 
 ## State model
 

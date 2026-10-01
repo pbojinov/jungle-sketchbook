@@ -4,6 +4,7 @@ const hud = document.querySelector('#hud');
 const clearButton = document.querySelector('#clear');
 const arrivals = document.querySelector('#arrivals');
 const arrivalList = document.querySelector('#arrival-list');
+const controls = document.querySelector('#controls');
 const arrivalCards = new Map();
 let arrivalOrder = 0;
 
@@ -12,6 +13,14 @@ const animalIds = new Set();
 let deviceScale = 1;
 let lastFrameTime = performance.now();
 let generation = 0;
+let controlsHeight = controls.getBoundingClientRect().height;
+
+function layoutControls() {
+  controlsHeight = controls.getBoundingClientRect().height;
+  arrivals.style.bottom = `${controlsHeight + 30}px`;
+}
+new ResizeObserver(layoutControls).observe(controls);
+layoutControls();
 
 function resizeCanvas() {
   deviceScale = Math.min(window.devicePixelRatio || 1, 2);
@@ -23,7 +32,7 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 function updateArrivals() {
-  const waiting = animals.filter((animal) => animal.waiting && !animal.hasEntered && !animal.restored)
+  const waiting = animals.filter((animal) => animal.waiting && !animal.hasEntered)
     .sort((a, b) => a.order - b.order);
   const ids = new Set(waiting.map((animal) => animal.id));
   for (const [id, card] of arrivalCards) {
@@ -77,32 +86,33 @@ async function addAnimal(data, restored = false) {
       return;
     }
 
-    const direction = SafariMotion.rowDirection(restored ? 1 : 0);
+    const plan = SafariMotion.arrivalPlan(order, animals.filter(a=>a.waiting&&a.layer===0).length);
     const species = SafariMotion.rigs[data.species] ? data.species : 'lion';
     animals.push({
       id: data.id,
       order,
       restored,
-      hasEntered: restored,
+      hasEntered: false,
       readyAt: performance.now() + (restored ? 0 : 450),
-      arrivalPause: 0.25 + Math.random() * 0.45,
+      arrivalPause: plan.arrivalPause,
       tempo: 1,
       tempoTarget: 1,
       tempoIn: 0,
       image,
+      footBaseline: textureFootBaseline(image, SafariMotion.rigs[species]),
       species,
-      direction,
+      direction: plan.direction,
       x: -1000,
       waiting: true,
       elapsed: 0,
       gait: 0,
-      textures: [0.025, 0.28, 0.46].map(fog => makeHazeTexture(image, fog)),
+      textures: [0.025, 0.34].map(fog => makeHazeTexture(image, fog)),
       mesh: AnimalRig.create(SafariMotion.rigs[species]),
-      age: restored ? 25 : 0,
+      age: 0,
       phase: Math.random() * Math.PI * 2,
       speed: SafariMotion.preferredSpeed(species, Math.random()),
-      spacing: 0.75 + Math.random() * 0.7,
-      layer: restored ? 1 : 0,
+      spacing: plan.spacing,
+      layer: 0,
     });
 
     while (animals.length > 30) {
@@ -118,6 +128,20 @@ async function addAnimal(data, restored = false) {
   });
 
   image.src = data.texture;
+}
+
+// Texture crops include transparent padding below the feet. Align visible ink,
+// rather than the rectangular crop, with the trail and its contact shadow.
+function textureFootBaseline(image, rig) {
+  const probe=document.createElement('canvas');
+  probe.width=image.width;probe.height=image.height;
+  const paint=probe.getContext('2d',{willReadFrequently:true});
+  paint.drawImage(image,0,0);
+  const pixels=paint.getImageData(0,0,probe.width,probe.height).data;
+  for(let y=probe.height-1;y>=0;y--) for(let x=0;x<probe.width;x++) {
+    if(pixels[(y*probe.width+x)*4+3]>32)return (y+1)/probe.height*rig.height;
+  }
+  return rig.height;
 }
 
 function makeHazeTexture(image, fog) {
@@ -152,22 +176,21 @@ function drawAnimal(animal, width, height, deltaTime) {
   SafariMotion.updateTempo(animal, deltaTime);
   const depth = animal.layer;
   const scale = SafariMotion.rowScale(depth, width);
-  const lane = 0.80 - depth * 0.145;
-  const movement = SafariMotion.pace(animal.elapsed, animal.arrivalPause);
+  const movement = 1; // Cadence already follows actual travel, including acceleration.
   const rig = SafariMotion.rigs[animal.species];
   const distance = SafariMotion.travelDistance(animal, animals, width, deltaTime);
   animal.x += distance * animal.direction;
   // Match planted-foot motion to ground speed instead of a fixed timer.
-  animal.gait += distance * 0.62 / (AnimalRig.STRIDE * scale);
+  animal.gait += distance * animal.mesh.profile.stance / (animal.mesh.profile.stride * scale);
   const animalWidth = rig.width * scale;
-  const animalHeight = rig.height * scale;
-  const y = height * lane - animalHeight;
+  const ground=JungleScene.groundY(width,height,depth,animal.x+animalWidth*.5,controlsHeight) + height*.008*animal.direction;
+  const y = ground - animal.footBaseline * scale;
 
   context.save();
-  context.globalAlpha = 0.13 * (1 - depth * 0.3);
+  context.globalAlpha = 0.22 * (1 - depth * 0.18);
   context.fillStyle = '#001a20';
   context.beginPath();
-  context.ellipse(animal.x + animalWidth * 0.5, height * lane - 4, animalWidth * 0.34, 5 * scale + 2, 0, 0, Math.PI * 2);
+  context.ellipse(animal.x + animalWidth * 0.5, ground - 4, animalWidth * 0.34, 5 * scale + 2, 0, 0, Math.PI * 2);
   context.fill();
   context.restore();
 
@@ -178,7 +201,8 @@ function drawAnimal(animal, width, height, deltaTime) {
     context.scale(-1, 1);
   }
   context.scale(scale, scale);
-  AnimalRig.draw(context, animal.textures[depth], rig, animal.mesh, animal.gait, movement);
+  context.globalAlpha = 1;
+  AnimalRig.draw(context, animal.textures[depth], rig, animal.mesh, animal.gait, movement, animal.age, animal.phase, undefined, animal.footBaseline);
   context.restore();
 
   const nextPass = SafariMotion.nextPass(animal, width);
@@ -196,29 +220,29 @@ function drawFrame(now) {
   const height = canvas.height / deviceScale;
 
   context.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
-  JungleScene.background(context, width, height, now);
+  JungleScene.background(context, width, height, now, controlsHeight);
 
-  // Admit each row's oldest waiting animal first, after its welcome poof.
-  for (const layer of [0, 1, 2]) {
-    const animal = animals.filter((entry) => entry.waiting && entry.layer === layer)
-      .sort((a, b) => a.order - b.order)[0];
-    if (animal && now >= animal.readyAt && SafariMotion.canEnter(animal, animals, width)) {
-      animal.x = SafariMotion.entryPosition(animal, width);
-      animal.waiting = false;
-      animal.hasEntered = true;
-      animal.elapsed = animal.layer === 0 ? 0 : 10;
+  // Each entry edge has its own FIFO queue on opposite sides of the same trail.
+  for (const layer of [0, 1]) for (const direction of [-1,1]) {
+    const animal=animals.filter(entry=>entry.waiting&&entry.layer===layer&&entry.direction===direction)
+      .sort((a,b)=>a.order-b.order)[0];
+    if(animal&&layer===0) animal.entryFromQueue=animals.some(other=>other!==animal&&other.layer===0&&other.direction===direction&&!other.waiting&&!other.dead);
+    if(animal&&now>=animal.readyAt&&SafariMotion.canEnter(animal,animals,width)) {
+      animal.x=SafariMotion.entryPosition(animal,width);
+      animal.waiting=false;animal.hasEntered=true;
+      animal.elapsed=animal.layer===0 ? 0 : 10;
       updateAnimalCount();
     }
   }
-  animals.sort((first, second) => second.layer - first.layer);
+  animals.sort((a,b)=>b.layer-a.layer || a.direction-b.direction);
   // Snapshot membership: exiting animals must not draw twice in the same frame.
-  const rows = [0, 1, 2].map((layer) => animals.filter((animal) => animal.layer === layer));
-  for (const layer of [2, 1, 0]) {
+  const rows = [0, 1].map((layer) => animals.filter((animal) => animal.layer === layer));
+  for (const layer of [1, 0]) {
     rows[layer].forEach((animal) => drawAnimal(animal, width, height, deltaTime));
     // Composite mist AFTER its animals, BEFORE the closer row.
-    if (layer > 0) drawMist(width, height, 0.80 - layer * 0.145, layer === 2 ? 0.25 : 0.16);
+    if (layer > 0) drawMist(width, height, JungleScene.groundY(width,height,layer,width*.5,controlsHeight)/height, 0.18);
   }
-  JungleScene.foreground(context, width, height, now);
+  JungleScene.foreground(context, width, height, now, controlsHeight);
 
   for (let index = animals.length - 1; index >= 0; index -= 1) {
     if (animals[index].dead) {

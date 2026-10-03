@@ -11,28 +11,28 @@
   const profiles = {
     elephant: { stride: 46, lift: 20, stance: .76, crouch: 4, skinFalloff: 0.36, phases: [0,.5,.25], bob: 1,
       head: [468,445,250,220,455,570], nod: .022, headBob: 3, headRate: 1,
-      tail: [174,606,90,80,244,579], tailAngle: .07, tailRate: 1.4,
+      tail: [174,606,90,80,244,579], tailAngle: .115, tailRate: .85,
       extra: [629,567,125,74,529,511], extraAngle: .055,
       eyes: [[435,451,15,23],[566,433,13,21]], blinkPeriod: 5.7 },
     giraffe: { stride: 60, lift: 28, stance: .72, crouch: 12, skinFalloff: 0.24, phases: [0,.5,.25], bob: 3,
       head: [566,337,200,230,429,631], nod: .025, headBob: 4, headRate: .5,
-      tail: [188,685,102,76,277,657], tailAngle: .09, tailRate: 1.9,
+      tail: [188,685,102,76,277,657], tailAngle: .145, tailRate: 1.05,
       eyes: [[549,350,15,23],[656,319,12,20]], blinkPeriod: 6.2 },
     lion: { stride: 54, lift: 24, stance: .72, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25], bob: 3,
       head: [508,450,235,249,449,627], nod: .035, headBob: 4, headRate: 1,
-      tail: [154,502,90,128,244,604], tailAngle: .11, tailRate: 1.35,
+      tail: [154,502,90,128,244,604], tailAngle: .14, tailRate: .9,
       eyes: [[491,431,15,22],[608,412,13,21]], blinkPeriod: 5.1 },
     monkey: { stride: 48, lift: 32, stance: .70, crouch: 2, skinFalloff: 0.28, phases: [0,.5,.25], bob: 4,
       head: [517,432,213,174,488,572], nod: .055, headBob: 6, headRate: 1,
-      tail: [194,505,112,159,294,626], tailAngle: .095, tailRate: 2.2,
+      tail: [194,505,112,159,294,626], tailAngle: .12, tailRate: 1.15,
       eyes: [[496,451,15,22],[610,429,15,22]], blinkPeriod: 4.3 },
     tiger: { stride: 58, lift: 20, stance: .74, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25], bob: 2,
       head: [536,429,208,192,456,594], nod: .026, headBob: 2, headRate: .5,
-      tail: [174,416,88,131,276,519], tailAngle: .085, tailRate: 1.15,
+      tail: [174,416,88,131,276,519], tailAngle: .135, tailRate: .8,
       eyes: [[508,414,16,24],[631,399,13,22]], blinkPeriod: 6.5 },
     zebra: { stride: 58, lift: 28, stance: .72, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25,.75], bob: 3,
       head: [593,387,165,180,466,568], nod: .04, headBob: 5, headRate: 1,
-      tail: [168,595,100,62,278,581], tailAngle: .13, tailRate: 2.7, tailFloor: 640,
+      tail: [168,595,100,62,278,581], tailAngle: .15, tailRate: 1.25, tailFloor: 640,
       eyes: [[575,410,16,23],[683,397,11,20]], blinkPeriod: 4.9 },
   };
   // [hipX, hipY, knee/hockX, knee/hockY, footX, footY, skinRadius].
@@ -99,6 +99,14 @@
     // replacing it with an artificial lid or painting over the scanned colors.
     const xs = Array.from({length:columns+1}, (_,i) => i*rig.width/columns);
     const ys = Array.from({length:rows+1}, (_,i) => i*rig.height/rows);
+    // Give thin tails enough vertices to bend smoothly, even on the small rear row.
+    const [tx,ty,rx,ry] = profile.tail;
+    for (const offset of [-.6,0,.6]) {
+      xs.push(tx+rx*offset-rig.x);
+      const y=ty+ry*offset;
+      // Grid rows span the whole image; preserve the calibrated blink spacing.
+      if (!profile.eyes.some(eye=>Math.abs(y-eye[1])<eye[3]*2+8)) ys.push(y-rig.y);
+    }
     for (const [x,y,rx,ry] of profile.eyes) {
       xs.push(x-rig.x-rx*2, x-rig.x-rx*.9, x-rig.x, x-rig.x+rx*.9, x-rig.x+rx*2);
       ys.push(y-rig.y-ry*2, y-rig.y-ry*.85, y-rig.y, y-rig.y+ry*.85, y-rig.y+ry*2);
@@ -113,6 +121,7 @@
       const lx=px+rig.x, ly=py+rig.y, leg=legs(rig,px,py);
       vertices.push({x:px,y:py, legs:leg, weights:leg.map(l=>l.weight),
         head: region(profile.head,lx,ly)*(1-motion.smooth((ly-profile.head[5]+10)/90)), tail: region(profile.tail,lx,ly),
+        tailReach: motion.smooth(Math.hypot(lx-profile.tail[4],ly-profile.tail[5]) / (Math.max(profile.tail[2],profile.tail[3])*1.7)),
         extra: profile.extra ? region(profile.extra,lx,ly) : 0,
         eyes: profile.eyes.map(([x,y,rx,ry]) => {
           const dx=Math.abs((lx-x)/rx), dy=Math.abs((ly-y)/ry);
@@ -146,7 +155,7 @@
     const {rig,profile} = mesh;
     const nod=Math.sin((gait-.08)*TAU*profile.headRate)*profile.nod*movement
       + Math.sin(time*.75+phase)*profile.nod*.35*(time ? 1 : 0);
-    const tailAngle=Math.sin(time*profile.tailRate+phase)*profile.tailAngle*(time ? 1 : movement);
+    const tailClock=time*profile.tailRate+phase;
     const pelvisY=(profile.crouch+Math.cos(gait*TAU*2)*profile.bob)*movement;
     const shoulderY=(profile.crouch+Math.cos((gait+.25)*TAU*2)*profile.bob)*movement;
     const anatomy=joints[rig.species];
@@ -168,8 +177,15 @@
       const head=rotate(profile.head,lx,ly,nod,v.head);
       dx+=head.x; dy+=head.y-Math.sin(gait*TAU)*profile.headBob*movement*v.head;
       const tailWeight=v.tail*(profile.tailFloor ? 1-motion.smooth((ly-profile.tailFloor+50)/50) : 1);
-      const tail=rotate(profile.tail,lx,ly,tailAngle,tailWeight);
-      dx+=tail.x;dy+=tail.y;
+      // The tip follows the root with a small delay and a larger arc. Rotate
+      // around the attachment point so the tail stays connected to the body.
+      if (tailWeight>0) {
+        const reach=v.tailReach;
+        const tailAngle=(Math.sin(tailClock-reach*.6)*(.55+reach*.45)
+          + Math.sin(tailClock*.47+phase)*.15)*profile.tailAngle*(time ? 1 : movement);
+        const tail=rotate(profile.tail,lx,ly,tailAngle,tailWeight);
+        dx+=tail.x;dy+=tail.y;
+      }
       if(profile.extra) {
         const extra=rotate(profile.extra,lx,ly,Math.sin(time*1.6+phase)*profile.extraAngle*(time?1:movement),v.extra);
         dx+=extra.x;dy+=extra.y;

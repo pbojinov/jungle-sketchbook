@@ -106,7 +106,7 @@ async function addAnimal(data, restored = false) {
       waiting: true,
       elapsed: 0,
       gait: 0,
-      textures: [0.025, 0.34].map(fog => makeHazeTexture(image, fog)),
+      textures: [0.025, 0.46].map(fog => makeHazeTexture(image, fog)),
       mesh: AnimalRig.create(SafariMotion.rigs[species]),
       age: 0,
       phase: Math.random() * Math.PI * 2,
@@ -158,12 +158,13 @@ function makeHazeTexture(image, fog) {
 }
 
 function drawMist(width, height, lane, opacity) {
-  const top = 0;
-  const bottom = height * (lane + 0.055);
+  const top = height * Math.max(0, lane - 0.48);
+  const bottom = height * (lane + 0.045);
   const mist = context.createLinearGradient(0, top, 0, bottom);
-  mist.addColorStop(0, `rgba(153, 187, 182, ${opacity * 0.3})`);
-  mist.addColorStop(0.4, `rgba(153, 187, 182, ${opacity * 0.8})`);
-  mist.addColorStop(0.7, `rgba(153, 187, 182, ${opacity})`);
+  mist.addColorStop(0, 'rgba(153, 187, 182, 0)');
+  mist.addColorStop(0.42, `rgba(153, 187, 182, ${opacity * 0.65})`);
+  mist.addColorStop(0.78, `rgba(153, 187, 182, ${opacity})`);
+  mist.addColorStop(0.92, `rgba(153, 187, 182, ${opacity * 0.55})`);
   mist.addColorStop(1, 'rgba(153, 187, 182, 0)');
   context.fillStyle = mist;
   context.fillRect(0, top, width, bottom - top);
@@ -240,7 +241,7 @@ function drawFrame(now) {
   for (const layer of [1, 0]) {
     rows[layer].forEach((animal) => drawAnimal(animal, width, height, deltaTime));
     // Composite mist AFTER its animals, BEFORE the closer row.
-    if (layer > 0) drawMist(width, height, JungleScene.groundY(width,height,layer,width*.5,controlsHeight)/height, 0.18);
+    if (layer > 0) drawMist(width, height, JungleScene.groundY(width,height,layer,width*.5,controlsHeight)/height, 0.30);
   }
   JungleScene.foreground(context, width, height, now, controlsHeight);
 

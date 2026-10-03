@@ -55,9 +55,11 @@ Each species has its own bending-leg gait, head/neck motion, tail sway and stagg
 blinks; the elephant also sways its trunk. A continuous texture mesh preserves the
 child's ink and coloring. Queued arrivals begin entering at the edge as soon as a
 safe gap opens, with shorter greetings and a slightly quicker walking pace.
-Speeds still drift gently. Canopy leaves, rooted plants and hanging vines move in
+Speeds still drift gently. Tails sway slowly around their attachment points, with
+a small delay and bend toward the tip. Canopy leaves, rooted plants and hanging vines move in
 a slow breeze; background animation freezes for reduced-motion preferences.
-All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque.
+All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque; a stronger mist band and atmospheric color blend
+separate the rear trail from the foreground.
 
 The front trail sits low on TV screens, with clearance based on the measured
 control height. The bottom-right menu starts collapsed and contains the animal

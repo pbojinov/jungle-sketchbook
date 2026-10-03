@@ -183,7 +183,10 @@ const JungleScene = (() => {
     });
   }
   function groundY(width,height,layer,x,controlsHeight=0) {
-    const front=Math.min(height*.80,height-controlsHeight-158);
+    // Keep the front trail low on short TV viewports. Only reserve the actual
+    // controls plus a small proportional margin, rather than a fixed 158px band.
+    const clearance=16+controlsHeight+Math.max(24,height*.035);
+    const front=Math.min(height*.86,height-clearance);
     const spacing=Math.min(height*.11,Math.max(30,(front-height*.30)/2));
     const t=Math.max(0,Math.min(1,x/width));
     return front-layer*spacing + height*.008*Math.sin(t*Math.PI*2+layer*.7);

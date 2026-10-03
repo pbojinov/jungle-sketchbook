@@ -44,7 +44,14 @@ for(const [width,height,controls] of [[884,994,112],[1472,1682,170],[1500,650,10
  for(const layer of [0,1]) for(let x=0;x<=width;x+=width/48) {
   const feet=scene.groundY(width,height,layer,x,controls);
   assert.ok(feet>horizon+height*.03,'all walking paths lie below the forest floor boundary');
-  assert.ok(feet<height-controls-140,'feet stay clear of the controls');
+  assert.ok(feet<height-controls-24,'feet stay clear of the controls');
  }
 }
 console.log('Both walking paths stay on the ground at portrait and landscape sizes');
+for (const [width,height,controls] of [[960,540,44],[1280,720,44],[1920,1080,44]]) {
+  const feet=scene.groundY(width,height,0,width*.5,controls);
+  assert.ok(feet>=height*.80,'TV entrances sit in the lower fifth of the screen');
+  const old=Math.min(height*.80,height-controls-158);
+  assert.ok(feet>old+height*.05,'TV path is visibly lower than the previous layout');
+}
+console.log('TV-sized entrance paths sit low while leaving room for controls');

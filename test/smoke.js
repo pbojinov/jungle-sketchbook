@@ -47,6 +47,8 @@ async function run() {
     '/capture.html?species=elephant',
     '/capture.html',
     '/print.html',
+    '/soundscape.js',
+    '/audio/jungle-ambience.mp3',
     '/display.html',
     '/animals/lion/template.svg',
     '/animals/elephant/template.svg',
@@ -66,6 +68,9 @@ async function run() {
   }
 
   assert.equal(await requestRaw('/%2e%2e%2fserver.js'), 403, 'path traversal should be blocked');
+  const sound = await fetch(`${baseUrl}/audio/jungle-ambience.mp3`);
+  assert.equal(sound.headers.get('content-type'),'audio/mpeg','TV receives the correct MP3 type');
+  assert.ok((await sound.arrayBuffer()).byteLength>10000,'sound asset is packaged locally');
 
   let response = await fetch(`${baseUrl}/api/animals`);
   assert.deepEqual(await response.json(), []);

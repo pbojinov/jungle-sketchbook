@@ -54,6 +54,7 @@ const contentTypes = {
   '.png': 'image/png',
   '.pdf': 'application/pdf',
   '.svg': 'image/svg+xml',
+  '.mp3': 'audio/mpeg',
 };
 
 function sendJson(res, statusCode, value) {

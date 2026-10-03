@@ -51,6 +51,32 @@
       button:hover { background: #245653; }
       button:focus-visible { outline: 3px solid #ffd88c; outline-offset: 3px; }
       button:disabled { opacity: 0.6; cursor: wait; }
+      #sound-controls {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        max-width: calc(100% - 32px);
+        padding: 8px;
+        color: white;
+        background: #001915d9;
+        border: 1px solid #ffffff30;
+        border-radius: 14px;
+        font: 500 13px system-ui;
+      }
+      #sound-controls label { display: flex; align-items: center; gap: 8px; }
+      #sound-volume { width: 100px; min-height: 44px; accent-color: #f0d36a; cursor: pointer; }
+      #sound-volume:focus-visible { outline: 3px solid #ffd88c; outline-offset: 2px; }
+      #sound-level { min-width: 32px; }
+      #sound-status { flex-basis: 100%; max-width: 310px; }
+      #sound-status:empty { display: none; }
+      @media (max-width: 700px) {
+        #sound-controls { top: 64px; }
+        #hud { max-width: calc(100% - 60px); }
+      }
       #arrivals {
         position: fixed;
         left: 16px;
@@ -122,6 +148,15 @@
   <body>
     <canvas id="world"></canvas>
     <div id="hud" aria-live="polite">Live Sketchbook Safari · waiting for animals…</div>
+    <section id="sound-controls" aria-label="Jungle soundscape">
+      <button id="sound-toggle" aria-pressed="false" aria-label="Turn jungle sounds on">🔈 Jungle sounds</button>
+      <label for="sound-volume">Volume
+        <input id="sound-volume" type="range" min="0" max="100" step="5" value="30">
+        <output id="sound-level" for="sound-volume">30%</output>
+      </label>
+      <span id="sound-status" role="status" aria-live="polite"></span>
+    </section>
+    <audio id="jungle-audio" loop preload="none" src="/audio/jungle-ambience.mp3?v=20261003"></audio>
     <section id="arrivals" aria-label="New drawings waiting to join" hidden>
       <p id="arrivals-title">Welcome to the jungle · waiting for a clear path</p>
       <div id="arrival-list" role="list"></div>
@@ -143,9 +178,10 @@
     <script src="/animals/zebra/shape.js?v=20260930"></script>
     <script src="/motion.js?v=20261001-walk-two-rows-12"></script>
     <script src="/samples.js?v=20260930"></script>
-    <script src="/scene.js?v=20261001-walk-two-rows-12"></script>
+    <script src="/scene.js?v=20261003-tv-ground"></script>
     <script src="/rig.js?v=20261001-walk-two-rows-12"></script>
     <script src="/display.js?v=20261001-walk-two-rows-12"></script>
     <script src="/demo.js?v=20260930"></script>
+    <script src="/soundscape.js?v=20261003"></script>
   </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Jungle Sketchbook Safari</title>
     <style>
       html,
@@ -20,29 +20,11 @@
         height: 100%;
       }
 
-      #hud, button {
+      button {
         color: white;
-        background: #0009;
+        background: #ffffff0d;
         border-radius: 12px;
         font: 600 14px system-ui;
-      }
-      #hud {
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        padding: 10px 14px;
-      }
-      #controls {
-        position: fixed;
-        bottom: 16px;
-        left: 16px;
-        right: 16px;
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      button {
         padding: 12px 16px;
         min-height: 44px;
         border: 1px solid #ffffff40;
@@ -51,41 +33,55 @@
       button:hover { background: #245653; }
       button:focus-visible { outline: 3px solid #ffd88c; outline-offset: 3px; }
       button:disabled { opacity: 0.6; cursor: wait; }
-      #sound-controls {
+      #menu-toggle {
         position: fixed;
-        top: 16px;
-        right: 16px;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        max-width: calc(100% - 32px);
-        padding: 8px;
+        right: calc(16px + env(safe-area-inset-right, 0px));
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        width: 56px;
+        height: 56px;
+        padding: 16px;
+        display: grid;
+        place-items: center;
+        background: #001915e8;
+        border-radius: 50%;
+        box-shadow: 0 4px 20px #0005;
+        z-index: 3;
+      }
+      #menu-toggle svg { width: 24px; height: 24px; }
+      #safari-menu {
+        position: fixed;
+        right: calc(16px + env(safe-area-inset-right, 0px));
+        bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+        width: 340px;
+        max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+        max-height: calc(100vh - 104px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+        max-height: calc(100dvh - 104px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+        box-sizing: border-box;
+        overflow-y: auto;
+        padding: 18px;
+        display: grid;
+        gap: 16px;
         color: white;
-        background: #001915d9;
+        background: #001915f2;
         border: 1px solid #ffffff30;
-        border-radius: 14px;
-        font: 500 13px system-ui;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px #0006;
+        font: 500 14px system-ui;
+        z-index: 2;
       }
+      #safari-menu[hidden] { display: none; }
+      #hud { font-weight: 600; }
+      #controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      #controls button { padding: 12px 8px; }
+      #clear { grid-column: 1 / -1; }
+      #sound-controls { display: grid; gap: 10px; padding: 14px 0; border-block: 1px solid #ffffff20; }
       #sound-controls label { display: flex; align-items: center; gap: 8px; }
-      #sound-volume { width: 100px; min-height: 44px; accent-color: #f0d36a; cursor: pointer; }
+      #sound-volume { width: 100%; min-width: 0; min-height: 44px; accent-color: #f0d36a; cursor: pointer; }
       #sound-volume:focus-visible { outline: 3px solid #ffd88c; outline-offset: 2px; }
-      #sound-level { min-width: 32px; }
-      #sound-status { flex-basis: 100%; max-width: 310px; }
+      #sound-level { min-width: 36px; text-align: right; }
+      #sound-status { font-size: 12px; line-height: 1.5; }
       #sound-status:empty { display: none; }
-      @media (max-width: 700px) {
-        #sound-controls { top: 64px; }
-        #hud { max-width: calc(100% - 60px); }
-      }
-      #arrivals {
-        position: fixed;
-        left: 16px;
-        right: 16px;
-        bottom: 78px;
-        color: #e7f8eb;
-        font: 500 12px system-ui;
-        pointer-events: none;
-      }
+      #arrivals { color: #e7f8eb; font: 500 12px system-ui; }
       #arrivals[hidden] { display: none; }
       #arrivals-title { margin: 0 0 4px; text-align: center; letter-spacing: 0.04em; }
       #arrival-list {
@@ -137,7 +133,6 @@
         70% { opacity: 1; transform: scale(1.06); }
         100% { opacity: 1; transform: scale(1); }
       }
-      @media (max-width: 560px) { #arrivals { bottom: 130px; } }
       @media (prefers-reduced-motion: reduce) {
         .arrival img { animation: none; }
         .arrival::before, .arrival::after { display: none; }
@@ -147,29 +142,37 @@
   </head>
   <body>
     <canvas id="world"></canvas>
-    <div id="hud" aria-live="polite">Live Sketchbook Safari · waiting for animals…</div>
-    <section id="sound-controls" aria-label="Jungle soundscape">
-      <button id="sound-toggle" aria-pressed="false" aria-label="Turn jungle sounds on">🔈 Jungle sounds</button>
-      <label for="sound-volume">Volume
-        <input id="sound-volume" type="range" min="0" max="100" step="5" value="30">
-        <output id="sound-level" for="sound-volume">30%</output>
-      </label>
-      <span id="sound-status" role="status" aria-live="polite"></span>
+    <section id="safari-menu" aria-label="Safari controls" hidden>
+      <div id="hud" aria-live="polite">Live Sketchbook Safari · waiting for animals…</div>
+      <section id="sound-controls" aria-label="Jungle soundscape">
+        <button id="sound-toggle" aria-pressed="false" aria-label="Turn jungle sounds on">🔈 Jungle sounds</button>
+        <label for="sound-volume">Volume
+          <input id="sound-volume" type="range" min="0" max="100" step="5" value="30">
+          <output id="sound-level" for="sound-volume">30%</output>
+        </label>
+        <span id="sound-status" role="status" aria-live="polite"></span>
+      </section>
+      <section id="arrivals" aria-label="New drawings waiting to join" hidden>
+        <p id="arrivals-title">Welcome to the jungle · waiting for a clear path</p>
+        <div id="arrival-list" role="list"></div>
+      </section>
+      <div id="controls" role="group" aria-label="Safari controls">
+        <button data-species="elephant">🐘 Add elephant</button>
+        <button data-species="giraffe">🦒 Add giraffe</button>
+        <button data-species="lion">🦁 Add lion</button>
+        <button data-species="monkey">🐒 Add monkey</button>
+        <button data-species="tiger">🐯 Add tiger</button>
+        <button data-species="zebra">🦓 Add zebra</button>
+        <button id="clear">Clear</button>
+      </div>
     </section>
+    <button id="menu-toggle" aria-label="Open safari controls" aria-expanded="false" aria-controls="safari-menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
     <audio id="jungle-audio" loop preload="none" src="/audio/jungle-ambience.mp3?v=20261003"></audio>
-    <section id="arrivals" aria-label="New drawings waiting to join" hidden>
-      <p id="arrivals-title">Welcome to the jungle · waiting for a clear path</p>
-      <div id="arrival-list" role="list"></div>
-    </section>
-    <div id="controls" role="group" aria-label="Safari controls">
-      <button data-species="elephant">🐘 Add elephant</button>
-      <button data-species="giraffe">🦒 Add giraffe</button>
-      <button data-species="lion">🦁 Add lion</button>
-      <button data-species="monkey">🐒 Add monkey</button>
-      <button data-species="tiger">🐯 Add tiger</button>
-      <button data-species="zebra">🦓 Add zebra</button>
-      <button id="clear">Clear</button>
-    </div>
+    <script src="/display-menu.js?v=20261003"></script>
     <script src="/animals/elephant/shape.js?v=20260930"></script>
     <script src="/animals/giraffe/shape.js?v=20260930"></script>
     <script src="/animals/lion/shape.js?v=20260930"></script>
@@ -180,7 +183,7 @@
     <script src="/samples.js?v=20260930"></script>
     <script src="/scene.js?v=20261003-tv-ground"></script>
     <script src="/rig.js?v=20261001-walk-two-rows-12"></script>
-    <script src="/display.js?v=20261001-walk-two-rows-12"></script>
+    <script src="/display.js?v=20261003-menu"></script>
     <script src="/demo.js?v=20260930"></script>
     <script src="/soundscape.js?v=20261003-autoplay"></script>
   </body>

@@ -4,7 +4,8 @@ const hud = document.querySelector('#hud');
 const clearButton = document.querySelector('#clear');
 const arrivals = document.querySelector('#arrivals');
 const arrivalList = document.querySelector('#arrival-list');
-const controls = document.querySelector('#controls');
+// Reserve only the launcher height so opening the menu cannot move the trails.
+const controls = document.querySelector('#menu-toggle');
 const arrivalCards = new Map();
 let arrivalOrder = 0;
 
@@ -17,7 +18,6 @@ let controlsHeight = controls.getBoundingClientRect().height;
 
 function layoutControls() {
   controlsHeight = controls.getBoundingClientRect().height;
-  arrivals.style.bottom = `${controlsHeight + 30}px`;
 }
 new ResizeObserver(layoutControls).observe(controls);
 layoutControls();

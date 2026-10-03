@@ -60,7 +60,9 @@ a slow breeze; background animation freezes for reduced-motion preferences.
 All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque.
 
 The front trail sits low on TV screens, with clearance based on the measured
-control height. Jungle ambience starts automatically on the display; adjust
+control height. The bottom-right menu starts collapsed and contains the animal
+count, sound settings, Add buttons and Clear. Open it with the hamburger button;
+close it with the same button, Escape or a tap outside. Jungle ambience starts automatically on the display; adjust
 **Volume** (default 30%) with the slider, which remembers its level. If the
 browser blocks autoplay, tap the display or press a key to enable sound.
 Select the sound button to stop it. The recording is a local

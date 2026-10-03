@@ -48,6 +48,7 @@ async function run() {
     '/capture.html',
     '/print.html',
     '/soundscape.js',
+    '/display-menu.js',
     '/audio/jungle-ambience.mp3',
     '/display.html',
     '/animals/lion/template.svg',

@@ -10,28 +10,28 @@
   const STRIDE = 48;
   const profiles = {
     elephant: { stride: 46, lift: 20, stance: .76, crouch: 4, skinFalloff: 0.36, phases: [0,.5,.25], bob: 1,
-      head: [468,445,250,220,455,570], nod: .022, headBob: 3, headRate: 1,
+      head: [468,445,250,220,455,570], nod: .022, headBob: 3, headRate: 1, headSway: .025, headSwayRate: .52,
       tail: [174,606,90,80,244,579], tailAngle: .115, tailRate: .85,
       extra: [629,567,125,74,529,511], extraAngle: .055,
       eyes: [[435,451,15,23],[566,433,13,21]], blinkPeriod: 5.7 },
     giraffe: { stride: 60, lift: 28, stance: .72, crouch: 12, skinFalloff: 0.24, phases: [0,.5,.25], bob: 3,
-      head: [566,337,200,230,429,631], nod: .025, headBob: 4, headRate: .5,
+      head: [566,337,200,230,429,631], nod: .025, headBob: 4, headRate: .5, headSway: .020, headSwayRate: .43,
       tail: [172,628,88,70,251,592], tailAngle: .145, tailRate: 1.05, tailBodyEdge: [225,260],
       eyes: [[549,350,15,23],[656,319,12,20]], blinkPeriod: 6.2 },
     lion: { stride: 54, lift: 24, stance: .72, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25], bob: 3,
-      head: [508,450,235,249,449,627], nod: .035, headBob: 4, headRate: 1,
+      head: [508,450,235,249,449,627], nod: .035, headBob: 4, headRate: 1, headSway: .028, headSwayRate: .54,
       tail: [154,502,90,128,244,604], tailAngle: .14, tailRate: .9,
       eyes: [[491,431,15,22],[608,412,13,21]], blinkPeriod: 5.1 },
     monkey: { stride: 48, lift: 32, stance: .70, crouch: 2, skinFalloff: 0.28, phases: [0,.5,.25], bob: 4,
-      head: [517,432,213,174,488,572], nod: .055, headBob: 6, headRate: 1,
+      head: [517,432,213,174,488,572], nod: .055, headBob: 6, headRate: 1, headSway: .038, headSwayRate: .70,
       tail: [194,505,112,159,294,626], tailAngle: .12, tailRate: 1.15,
       eyes: [[496,451,15,22],[610,429,15,22]], blinkPeriod: 4.3 },
     tiger: { stride: 58, lift: 20, stance: .74, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25], bob: 2,
-      head: [536,429,208,192,456,594], nod: .026, headBob: 2, headRate: .5,
+      head: [536,429,208,192,456,594], nod: .026, headBob: 2, headRate: .5, headSway: .025, headSwayRate: .48,
       tail: [174,416,88,131,276,519], tailAngle: .135, tailRate: .8,
       eyes: [[508,414,16,24],[631,399,13,22]], blinkPeriod: 6.5 },
     zebra: { stride: 58, lift: 28, stance: .72, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25,.75], bob: 3,
-      head: [593,387,165,180,466,568], nod: .04, headBob: 5, headRate: 1,
+      head: [593,387,165,180,466,568], nod: .04, headBob: 5, headRate: 1, headSway: .027, headSwayRate: .58,
       tail: [168,595,100,62,278,581], tailAngle: .15, tailRate: 1.25, tailFloor: 640,
       eyes: [[575,410,16,23],[683,397,11,20]], blinkPeriod: 4.9 },
   };
@@ -153,8 +153,14 @@
   }
   function deform(mesh, gait, movement = 1, time = 0, phase = 0, blink = 0) {
     const {rig,profile} = mesh;
-    const nod=Math.sin((gait-.08)*TAU*profile.headRate)*profile.nod*movement
-      + Math.sin(time*.75+phase)*profile.nod*.35*(time ? 1 : 0);
+    // A slow, independent neck motion keeps the head alive between steps.
+    // Blend in on arrival; each animal's phase slightly varies its timing.
+    const settle=motion.smooth(time/1.5);
+    const headClock=time*profile.headSwayRate*(.92+.08*Math.sin(phase*1.31))+phase;
+    const nod=Math.sin((gait-.08)*TAU*profile.headRate)*profile.nod*movement*.55
+      + (Math.sin(headClock)*.82+Math.sin(headClock*.51+phase*.73)*.18)*profile.headSway*settle;
+    const headLift=Math.sin(gait*TAU)*profile.headBob*movement*.55
+      + Math.sin(headClock*.79+phase*.5)*profile.headBob*.35*settle;
     const tailClock=time*profile.tailRate+phase;
     const pelvisY=(profile.crouch+Math.cos(gait*TAU*2)*profile.bob)*movement;
     const shoulderY=(profile.crouch+Math.cos((gait+.25)*TAU*2)*profile.bob)*movement;
@@ -175,7 +181,7 @@
       dx/=Math.max(1,total); dy/=Math.max(1,total);
       dy+=bodyAt(lx)*v.body*(1-Math.min(1,total));
       const head=rotate(profile.head,lx,ly,nod,v.head);
-      dx+=head.x; dy+=head.y-Math.sin(gait*TAU)*profile.headBob*movement*v.head;
+      dx+=head.x; dy+=head.y-headLift*v.head;
       const tailWeight=v.tail*(profile.tailFloor ? 1-motion.smooth((ly-profile.tailFloor+50)/50) : 1)
         * (profile.tailBodyEdge ? 1-motion.smooth((lx-profile.tailBodyEdge[0])/(profile.tailBodyEdge[1]-profile.tailBodyEdge[0])) : 1);
       // The tip follows the root with a small delay and a larger arc. Rotate

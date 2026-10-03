@@ -14,13 +14,13 @@
   // Gentle artistic compression of running-speed differences, not measured walking speeds.
   const speedFactors = { elephant: 0.94, giraffe: 1.02, lion: 0.98, monkey: 1.04, tiger: 1.01, zebra: 1.02 };
   function preferredSpeed(species, individual = 0.5) {
-    return 36 * speedFactors[species] * (0.98 + individual * 0.04);
+    return 36 * 0.85 * speedFactors[species] * (0.98 + individual * 0.04);
   }
-  function travelDistance(animal, others, width, dt) {
-    const scale = rowScale(animal.layer, width);
+  function travelDistance(animal, others, width, dt, height = Infinity) {
+    const scale = rowScale(animal.layer, width, height);
     const drift = animal.tempo || 1;
     const desired = animal.speed * scale / 0.42 * pace(animal.elapsed, animal.arrivalPause) * drift * dt;
-    const animalWidth = rigs[animal.species].width * scale;
+    const animalWidth = rigs[animal.species].width * animalScale(animal, width, height);
     let nearestGap = Infinity;
     for (const other of others) {
       if (other === animal || other.waiting || other.dead || other.layer !== animal.layer || (other.direction ?? rowDirection(other.layer)) !== animal.direction) continue;
@@ -28,7 +28,7 @@
       if (!ahead) continue;
       const gap = animal.direction === 1
         ? other.x - animal.x - animalWidth
-        : animal.x - other.x - rigs[other.species].width * scale;
+        : animal.x - other.x - rigs[other.species].width * animalScale(other, width, height);
       nearestGap = Math.min(nearestGap, gap);
     }
     const safeGap = Math.max(28, width * 0.035);
@@ -36,46 +36,53 @@
     const ease = smooth((nearestGap - safeGap) / (preferredGap - safeGap));
     return Math.max(0, Math.min(desired * ease, nearestGap - safeGap));
   }
-  const rowCount = 2;
-  function rowDirection(layer) { return layer === 1 ? -1 : 1; }
-  function rowScale(layer, width) {
-    return (0.42 - layer * 0.115) * Math.min(width / 900, 1.5);
+  const rowCount = 4;
+  function rowDirection(layer) { return layer % 2 ? -1 : 1; }
+  function rowScale(layer, width, height = Infinity) {
+    // A height limit keeps the largest giraffes inside short TV viewports.
+    return [0.42, 0.34, 0.27, 0.21][layer] * Math.min(width / 900, 1.5, height / 500);
   }
-  function nextPass(animal, width) {
+  function animalScale(animal, width, height = Infinity) {
+    return rowScale(animal.layer, width, height) * (animal.size ?? 1);
+  }
+  function nextPass(animal, width, infinite = false, height = Infinity) {
     const rig = rigs[animal.species];
-    const scale = rowScale(animal.layer, width);
+    const scale = animalScale(animal, width, height);
     const animalWidth = rig.width * scale;
     // Include the moving feet beyond the texture's original bounds.
-    const margin = 40 * scale;
+    const margin = 80 * scale;
     const exited = animal.direction === 1
       ? animal.x > width + margin
       : animal.x + animalWidth < -margin;
     if (!exited) return null;
-    if (animal.layer >= rowCount-1) return { dead: true };
-    const layer = animal.layer + 1;
-    const nextScale = rowScale(layer, width);
-    const direction = -animal.direction;
+    const lastRow = animal.layer >= rowCount - 1;
+    if (lastRow && !infinite) return { dead: true };
+    const layer = lastRow ? 0 : animal.layer + 1;
+    const nextScale = animalScale({ ...animal, layer }, width, height);
+    const direction = lastRow
+      ? (animal.startDirection ?? -animal.direction)
+      : -animal.direction;
     return {
       layer,
       direction,
-      x: direction === 1 ? -(rig.width + 40) * nextScale : width + 40 * nextScale,
+      x: direction === 1 ? -(rig.width + 80) * nextScale : width + 80 * nextScale,
     };
   }
-  function entryPosition(animal, width) {
-    const scale = rowScale(animal.layer, width);
+  function entryPosition(animal, width, height = Infinity) {
+    const scale = animalScale(animal, width, height);
     const animalWidth = rigs[animal.species].width * scale;
     const direction=animal.direction ?? rowDirection(animal.layer);
     // The head appears at the entry edge; later queued arrivals need only a
     // leading portion of their body to fit, from either side.
-    if(animal.layer===0) return direction===1
+    if(animal.layer===0 && !animal.hasEntered) return direction===1
       ? (animal.entryFromQueue ? 24-animalWidth+72*scale : 24)
       : (animal.entryFromQueue ? width-24-72*scale : width-24-animalWidth);
-    return direction===1 ? -(animalWidth+40*scale) : width+40*scale;
+    return direction===1 ? -(animalWidth+80*scale) : width+80*scale;
   }
-  function canEnter(animal, others, width) {
+  function canEnter(animal, others, width, height = Infinity) {
     if(animal.layer>0&&others.filter(other=>other!==animal&&!other.waiting&&!other.dead&&other.layer===animal.layer).length>=3)return false;
-    const scale = rowScale(animal.layer, width);
-    const left = entryPosition(animal, width);
+    const scale = animalScale(animal, width, height);
+    const left = entryPosition(animal, width, height);
     const right = left + rigs[animal.species].width * scale;
     const gap = Math.max(Math.max(28, width * 0.035) + 4,
       Math.max(32, width * 0.04) * (animal.spacing || 1));
@@ -83,7 +90,7 @@
     return others.every((other) => other === animal || other.waiting || other.dead ||
       other.layer !== animal.layer || (other.direction ?? rowDirection(other.layer)) !== direction || (direction === 1
         ? other.x >= right + gap
-        : other.x + rigs[other.species].width * scale <= left - gap));
+        : other.x + rigs[other.species].width * animalScale(other, width, height) <= left - gap));
   }
   function arrivalPlan(order, backlog=0, random=Math.random) {
     // A steady queue still uses both edges; low traffic has longer pauses/gaps.
@@ -91,7 +98,8 @@
     const spread=random();
     return { layer:0, direction:order%2===0 ? -1 : 1,
       spacing: .85 + spread*(1.65-pressure*1.05),
-      arrivalPause: .12+random()*(.65-pressure*.45) };
+      arrivalPause: .12+random()*(.65-pressure*.45),
+      size: .7 + random() * .6 };
   }
   function updateTempo(animal, dt, random = Math.random) {
     animal.tempoIn = (animal.tempoIn ?? 0) - dt;
@@ -115,5 +123,5 @@
     const progress=(-2*swing**3+3*swing**2)+slope*(2*swing**3-3*swing**2+swing);
     return { x: stride * (-0.5 + progress), lift: Math.sin(Math.PI*swing)**2 * lift, swing };
   }
-  return { rigs, rowCount, arrivalPlan, speedFactors, preferredSpeed, travelDistance, updateTempo, smooth, rowDirection, rowScale, nextPass, entryPosition, canEnter, pace, footstep, shouldFlip: (species, direction) => rigs[species].facing !== direction };
+  return { rigs, rowCount, arrivalPlan, speedFactors, preferredSpeed, travelDistance, updateTempo, smooth, rowDirection, rowScale, animalScale, nextPass, entryPosition, canEnter, pace, footstep, shouldFlip: (species, direction) => rigs[species].facing !== direction };
 });

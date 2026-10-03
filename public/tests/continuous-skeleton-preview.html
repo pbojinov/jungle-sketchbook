@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animal animation preview</title>
+<style>
+body{background:#183b3d;color:#edf5e5;font:15px system-ui;margin:24px}h1{font-size:24px}p{max-width:850px;color:#bbd6cc}
+#animals{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:14px;max-width:1100px}article{background:#244c4d;border:1px solid #72928744;border-radius:16px;padding:12px}h2{margin:0;font-size:18px}canvas{width:100%;height:270px;display:block}button,input{margin:8px}button{padding:9px 15px;border-radius:8px;border:0}label{white-space:nowrap}#result{margin:10px 0;font-size:13px}@media(max-width:740px){#animals{grid-template-columns:repeat(2,minmax(160px,1fr))}canvas{height:220px}}
+</style></head><body>
+<h1>Continuous skeleton preview</h1>
+<p>Compare the six walks without waiting for the queue. Pause and scrub to inspect knees, heads, tails and blinks. The artwork is the same texture used for scanned animals.</p>
+<button id="play">Pause</button><label>Pose <input id="pose" aria-label="Animation time" type="range" min="0" max="12" step="0.02" value="0"></label><label><input id="blink" type="checkbox">Hold eyes closed</label>
+<div id="result">Loading six animals…</div><main id="animals"></main>
+<script src="/animals/elephant/shape.js"></script><script src="/animals/giraffe/shape.js"></script><script src="/animals/lion/shape.js"></script><script src="/animals/monkey/shape.js"></script><script src="/animals/tiger/shape.js"></script><script src="/animals/zebra/shape.js"></script>
+<script src="/motion.js"></script><script src="/samples.js"></script><script src="/rig-v2.js?v=prototype"></script>
+<script type="module">
+import "/rig-continuous-skeleton.js";
+(async()=>{
+ const notes={elephant:'Heavy steps · slow nod · trunk sway',giraffe:'Long steps · neck sway · soft tail swing',lion:'Relaxed paws · mane nod · tail-tip sway',monkey:'Springy steps · curious head · curled tail',tiger:'Low prowl · measured nod · slow tail sweep',zebra:'High hoof recovery · head nod · tail flick'};
+ const cards=await Promise.all(Object.keys(AnimalShapes).map(async species=>{
+  const image=new Image();image.src=await sampleTexture(species);await image.decode();
+  const article=document.createElement('article');const title=document.createElement('h2');title.textContent=species;
+  const canvas=document.createElement('canvas');canvas.width=440;canvas.height=540;
+  const caption=document.createElement('p');caption.textContent=notes[species];article.append(title,canvas,caption);article.style.order=Object.keys(AnimalShapes).indexOf(species);document.querySelector('#animals').append(article);
+  const rig=SafariMotion.rigs[species];return {species,image,canvas,ctx:canvas.getContext('2d'),rig,mesh:AnimalRig.create(rig)};
+ }));
+ let playing=true,time=0,last=0,frames=[],maximumJointError=0,maximumFolds=0;
+ const play=document.querySelector('#play'),pose=document.querySelector('#pose'),blink=document.querySelector('#blink');
+ play.onclick=()=>{playing=!playing;play.textContent=playing?'Pause':'Play';};
+ pose.oninput=()=>{time=Number(pose.value);playing=false;play.textContent='Play';};
+ function frame(now){
+  const dt=last ? (now-last)/1000 : 0;last=now;if(playing) time+=Math.min(dt,.05);pose.value=time%12;
+  const began=performance.now();
+  cards.forEach((card,i)=>{
+   const {ctx,canvas,rig,mesh,image}=card;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();
+   const scale=Math.min(380/rig.width,475/rig.height),ground=canvas.height-28;
+   const cadence=SafariMotion.preferredSpeed(card.species,.5)/.42*mesh.profile.stance/mesh.profile.stride;
+   ctx.strokeStyle='#83aaa066';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(10,ground+2);ctx.lineTo(canvas.width-10,ground+2);ctx.stroke();
+   // Reference marks move with the terrain in this camera-following preview.
+   const travelled=time*cadence*mesh.profile.stride/mesh.profile.stance*scale;
+   for(let x=10-(travelled%40);x<canvas.width;x+=40){ctx.beginPath();ctx.moveTo(x,ground+5);ctx.lineTo(x-6,ground+10);ctx.stroke();}
+   ctx.translate((canvas.width-rig.width*scale)/2,ground-rig.height*scale);ctx.scale(scale,scale);
+   AnimalRig.draw(ctx,image,rig,mesh,time*cadence,1,time,i*.91,blink.checked?1:undefined,rig.height);ctx.restore();
+  });
+  frames.push(performance.now()-began);if(frames.length>60)frames.shift();
+  maximumJointError=Math.max(maximumJointError,...cards.map(c=>c.mesh.skeletonQuality?.jointError||0));maximumFolds=Math.max(maximumFolds,...cards.map(c=>c.mesh.skeletonQuality?.folds||0));
+  document.querySelector('#result').textContent=`Loaded all six animals · ${Math.round(frames.reduce((a,b)=>a+b,0)/frames.length)} ms to render six rigs (${AnimalRig.rendererMode()} · Three.js skeleton) · ${playing?'Playing':'Paused'} at ${time.toFixed(2)}s · Folds / joint error: ${cards.map(c=>`${c.species} ${c.mesh.skeletonQuality?.folds}/${c.mesh.skeletonQuality?.jointError.toFixed(1)}`).join(', ')} · Maximum joint error ${maximumJointError.toFixed(3)}px · Maximum folds ${maximumFolds}`;
+  requestAnimationFrame(frame);
+ }
+ requestAnimationFrame(frame);
+})().catch(error=>{document.querySelector('#result').textContent=`FAIL: ${error.message}`;});
+</script></body></html>

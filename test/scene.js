@@ -39,15 +39,16 @@ console.log('Anchored vines, subtle breeze, animated leaves and reduced motion p
 
 // Every depth lane is inside the painted floor, including tall and short screens.
 for(const [width,height,controls] of [[884,994,112],[1472,1682,170],[1500,650,100],[450,800,200]]) {
- const rear=scene.groundY(width,height,1,width*.5,controls);
- const horizon=rear-height*.065;
- for(const layer of [0,1]) for(let x=0;x<=width;x+=width/48) {
+ const horizon=scene.groundY(width,height,4,width*.5,controls)+height*.025;
+ for(const layer of [0,1,2,3]) for(let x=0;x<=width;x+=width/48) {
   const feet=scene.groundY(width,height,layer,x,controls);
   assert.ok(feet>horizon+height*.03,'all walking paths lie below the forest floor boundary');
-  assert.ok(feet<height-controls-24,'feet stay clear of the controls');
+  assert.ok(feet<height-5,'feet stay inside the bottom of the canvas');
+  if(layer===0)assert.ok(feet>height*.965,'first trail sits at the very bottom');
+  assert.equal(feet,scene.groundY(width,height,layer,x,0),'floating controls do not move the ground');
  }
 }
-console.log('Both walking paths stay on the ground at portrait and landscape sizes');
+console.log('Four evenly spaced paths stay grounded at portrait and landscape sizes');
 for (const [width,height,controls] of [[960,540,44],[1280,720,44],[1920,1080,44]]) {
   const feet=scene.groundY(width,height,0,width*.5,controls);
   assert.ok(feet>=height*.80,'TV entrances sit in the lower fifth of the screen');

@@ -60,6 +60,7 @@
         overflow-y: auto;
         padding: 18px;
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 16px;
         color: white;
         background: #001915f2;
@@ -70,17 +71,21 @@
         z-index: 2;
       }
       #safari-menu[hidden] { display: none; }
+      #safari-menu > * { min-width: 0; }
       #hud { font-weight: 600; }
       #controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       #controls button { padding: 12px 8px; }
       #clear { grid-column: 1 / -1; }
       #sound-controls { display: grid; gap: 10px; padding: 14px 0; border-block: 1px solid #ffffff20; }
       #sound-controls label { display: flex; align-items: center; gap: 8px; }
-      #sound-volume { width: 100%; min-width: 0; min-height: 44px; accent-color: #f0d36a; cursor: pointer; }
+      #sound-volume { flex: 1; width: 0; min-width: 0; min-height: 44px; accent-color: #f0d36a; cursor: pointer; }
       #sound-volume:focus-visible { outline: 3px solid #ffd88c; outline-offset: 2px; }
       #sound-level { min-width: 36px; text-align: right; }
       #sound-status { font-size: 12px; line-height: 1.5; }
       #sound-status:empty { display: none; }
+      #walk-controls { display: grid; gap: 8px; }
+      #loop-toggle[aria-pressed="true"] { background: #245653; border-color: #a4cbb8; }
+      #loop-status { font-size: 12px; line-height: 1.5; color: #c7ddd5; }
       #arrivals { color: #e7f8eb; font: 500 12px system-ui; }
       #arrivals[hidden] { display: none; }
       #arrivals-title { margin: 0 0 4px; text-align: center; letter-spacing: 0.04em; }
@@ -144,6 +149,10 @@
     <canvas id="world"></canvas>
     <section id="safari-menu" aria-label="Safari controls" hidden>
       <div id="hud" aria-live="polite">Live Sketchbook Safari · waiting for animals…</div>
+      <section id="walk-controls" aria-label="Animal playback">
+        <button id="loop-toggle" aria-pressed="false">∞ Infinite mode off</button>
+        <span id="loop-status" role="status">Animals disappear after the last row.</span>
+      </section>
       <section id="sound-controls" aria-label="Jungle soundscape">
         <button id="sound-toggle" aria-pressed="false" aria-label="Turn jungle sounds on">🔈 Jungle sounds</button>
         <label for="sound-volume">Volume
@@ -179,11 +188,14 @@
     <script src="/animals/monkey/shape.js?v=20260930"></script>
     <script src="/animals/tiger/shape.js?v=20260930"></script>
     <script src="/animals/zebra/shape.js?v=20260930"></script>
-    <script src="/motion.js?v=20261001-walk-two-rows-12"></script>
+    <script src="/motion.js?v=20261003-four-rows-loop"></script>
     <script src="/samples.js?v=20260930"></script>
-    <script src="/scene.js?v=20261003-tv-ground"></script>
-    <script src="/rig.js?v=20261003-gentle-heads"></script>
-    <script src="/display.js?v=20261003-depth-haze"></script>
+    <script src="/scene.js?v=20261003-bottom-trail"></script>
+    <script src="/rig-v2.js?v=20261003-skeleton-walk"></script>
+    <script type="module">
+      await import('/rig-continuous-skeleton.js?v=20261003-skeleton-walk');
+      await import('/display.js?v=20261003-four-rows-loop');
+    </script>
     <script src="/demo.js?v=20260930"></script>
     <script src="/soundscape.js?v=20261003-autoplay"></script>
   </body>

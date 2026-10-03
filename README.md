@@ -52,19 +52,17 @@ folded sheets, and unfamiliar artwork can still require manual adjustment. See
 
 New arrivals appear with a poof in the waiting area, then enter as space opens.
 Each species has its own bending-leg gait, head/neck motion, tail sway and staggered
-blinks; the elephant also sways its trunk. A continuous texture mesh preserves the
-child's ink and coloring. Queued arrivals begin entering at the edge as soon as a
-safe gap opens, with shorter greetings and a slightly quicker walking pace.
+blinks; the elephant also sways its trunk. A continuous texture mesh bound to a Three.js skeleton preserves the
+child's ink and coloring, with separate hip, knee and hock controls for the hind legs. Queued arrivals begin entering at the edge as soon as a
+safe gap opens, with shorter greetings and a relaxed walking pace (15% slower).
 Speeds still drift gently. Heads tilt and rise slowly at individual rhythms,
 with a softer step-linked nod and a gradual blend on arrival. Tails sway slowly around their attachment points, with
 a small delay and bend toward the tip. Canopy leaves, rooted plants and hanging vines move in
 a slow breeze; background animation freezes for reduced-motion preferences.
-All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque; a stronger mist band and atmospheric color blend
-separate the rear trail from the foreground.
+All animals, including saved drawings after a refresh, start on the front row from either side. Each drawing gets a fixed random size from 70% to 130%; spacing and foot cadence account for that size. Gaps vary with scan pressure. After exiting fully offscreen, animals continue along three progressively smaller, hazier background rows, with at most three active animals on each background row. Their bodies remain opaque; mist and atmospheric color blend separate the trails.
 
-The front trail sits low on TV screens, with clearance based on the measured
-control height. The bottom-right menu starts collapsed and contains the animal
-count, sound settings, Add buttons and Clear. Open it with the hamburger button;
+The front trail sits at the very bottom on phone and TV screens; four trails have equal vertical spacing. The floating menu does not move the ground. The bottom-right menu starts collapsed and contains the animal
+count, **∞ Infinite mode**, sound settings, Add buttons and Clear. Disappear mode is the default: animals leave after the fourth row. Enable infinite mode to return them to the front from their original side after each complete circuit. The preference is remembered on that browser; switching it off lets the animals finish their current circuit and disappear. Open the menu with the hamburger button;
 close it with the same button, Escape or a tap outside. Jungle ambience starts automatically on the display; adjust
 **Volume** (default 30%) with the slider, which remembers its level. If the
 browser blocks autoplay, tap the display or press a key to enable sound.
@@ -85,6 +83,7 @@ node test/capture.js
 node test/smoke.js
 node test/scene.js
 node test/display.js
+node test/skeleton.js
 node test/soundscape.js
 ```
 
@@ -95,6 +94,8 @@ of incomplete images, and the server/API contract including unavailable detectio
 `/tests/animal-animation.html` shows all six rigs together, with pause, scrub and
 hold-blink controls for visual inspection. WebGL renders the continuous mesh
 without triangle seams; Canvas provides a fallback when WebGL is unavailable.
+`/tests/continuous-skeleton-preview.html` uses the new main-display skeleton walk
+and provides close-up pose and blink inspection for all six animals.
 
 ## Rebuild artwork
 
@@ -126,7 +127,7 @@ all reference features on the first scan.
 - `scanning/`: persistent local OpenCV worker, reference features, and print marks.
 - `public/animals/`: catalog, traced paths, shared crop/rig geometry, print templates.
 - `public/samples.js`: colored demo textures from the traced artwork.
-- `public/motion.js` / `rig.js`: pacing, spacing, and continuous foot deformation.
+- `public/motion.js` / `rig-v2.js` / `rig-continuous-skeleton.js`: pacing, spacing, bone targets, weighted skinning and rendering. `public/vendor/three/` contains the local MIT-licensed skeleton library; no CDN is needed. The older `rig.js` remains available for animation comparisons.
 - `public/display.js` / `scene.js`: arrivals, lifecycle, mist, and jungle scenery.
 
 `POST /api/detect` accepts `{image, species?}` with a JPEG/PNG data URL. It returns

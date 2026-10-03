@@ -183,13 +183,11 @@ const JungleScene = (() => {
     });
   }
   function groundY(width,height,layer,x,controlsHeight=0) {
-    // Keep the front trail low on short TV viewports. Only reserve the actual
-    // controls plus a small proportional margin, rather than a fixed 158px band.
-    const clearance=16+controlsHeight+Math.max(24,height*.035);
-    const front=Math.min(height*.86,height-clearance);
-    const spacing=Math.min(height*.11,Math.max(30,(front-height*.30)/2));
+    // The menu floats over the scene; it never lifts the animals off the bottom.
+    const front=height-Math.max(12,height*.02);
+    const spacing=height*.13;
     const t=Math.max(0,Math.min(1,x/width));
-    return front-layer*spacing + height*.008*Math.sin(t*Math.PI*2+layer*.7);
+    return front-layer*spacing + height*.004*Math.sin(t*Math.PI*2+layer*.7);
   }
   function walkingPath(ctx,width,height,layer,controlsHeight) {
     ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
@@ -201,8 +199,8 @@ const JungleScene = (() => {
       }
     };
     // A broad, softly lit trail with a narrower worn centre; shadows sit on it.
-    const breadth=height*(.042-layer*.009);
-    ctx.strokeStyle=['#416c5b','#3f6557','#46675e'][layer];ctx.globalAlpha=.27;
+    const breadth=height*(.042-layer*.006);
+    ctx.strokeStyle=['#416c5b','#3f6557','#46675e','#4b7068'][layer];ctx.globalAlpha=.27;
     ctx.lineWidth=breadth;points();ctx.stroke();
     ctx.strokeStyle='#8b9d7940';ctx.lineWidth=breadth*.42;points();ctx.stroke();
     ctx.restore();
@@ -240,7 +238,7 @@ const JungleScene = (() => {
     });
     // A continuous floor keeps shading from reading as an extra walking row.
     // The forest edge sits one equal interval behind the rear trail.
-    const y=groundY(width,height,2,width*.5,controlsHeight);
+    const y=groundY(width,height,4,width*.5,controlsHeight);
     const ground = ctx.createLinearGradient(0, y - 20, 0, height);
     ground.addColorStop(0, '#235354');
     ground.addColorStop(.3, '#153d41');
@@ -249,11 +247,11 @@ const JungleScene = (() => {
     ctx.beginPath();ctx.moveTo(0, y + 12);
     ctx.bezierCurveTo(width * 0.3, y - height * 0.025, width * 0.53, y + height * 0.045, width, y - height * 0.018);
     ctx.lineTo(width, height);ctx.lineTo(0, height);ctx.fill();
-    for(const layer of [1,0])walkingPath(ctx,width,height,layer,controlsHeight);
+    for(const layer of [3,2,1,0])walkingPath(ctx,width,height,layer,controlsHeight);
     // Moss and fallen leaves are low-contrast flecks, concentrated at the edges.
     for (let i = 0; i < 240; i++) {
       const x = rng() * width;
-      const horizon=groundY(width,height,2,x,controlsHeight)+height*.015;
+      const horizon=groundY(width,height,4,x,controlsHeight)+height*.015;
       const y = horizon + rng()*(height-horizon);
       ctx.globalAlpha = 0.08 + rng() * 0.12;
       ctx.fillStyle = ['#73a58a', '#588e86', '#91719b'][i % 3];

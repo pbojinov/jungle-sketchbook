@@ -4,7 +4,7 @@ const hud = document.querySelector('#hud');
 const clearButton = document.querySelector('#clear');
 const arrivals = document.querySelector('#arrivals');
 const arrivalList = document.querySelector('#arrival-list');
-// Reserve only the launcher height so opening the menu cannot move the trails.
+// Opening the floating menu cannot move the trails.
 const controls = document.querySelector('#menu-toggle');
 const arrivalCards = new Map();
 let arrivalOrder = 0;
@@ -15,6 +15,25 @@ let deviceScale = 1;
 let lastFrameTime = performance.now();
 let generation = 0;
 let controlsHeight = controls.getBoundingClientRect().height;
+const loopButton = document.querySelector('#loop-toggle');
+const loopStorageKey = 'jungle-infinite-mode';
+let infiniteMode = false;
+try { infiniteMode = localStorage.getItem(loopStorageKey) === 'true'; } catch { /* Optional preference. */ }
+
+function renderLoopSetting() {
+  if (!loopButton) return;
+  loopButton.textContent = infiniteMode ? '∞ Infinite mode on' : '∞ Infinite mode off';
+  loopButton.setAttribute('aria-pressed', String(infiniteMode));
+  document.querySelector('#loop-status').textContent = infiniteMode
+    ? 'Animals return to the front after the last row.'
+    : 'Animals disappear after the last row.';
+}
+loopButton?.addEventListener('click', () => {
+  infiniteMode = !infiniteMode;
+  try { localStorage.setItem(loopStorageKey, String(infiniteMode)); } catch { /* TV/private browsers may disable storage. */ }
+  renderLoopSetting();
+});
+renderLoopSetting();
 
 function layoutControls() {
   controlsHeight = controls.getBoundingClientRect().height;
@@ -102,11 +121,13 @@ async function addAnimal(data, restored = false) {
       footBaseline: textureFootBaseline(image, SafariMotion.rigs[species]),
       species,
       direction: plan.direction,
+      startDirection: plan.direction,
+      size: plan.size,
       x: -1000,
       waiting: true,
       elapsed: 0,
       gait: 0,
-      textures: [0.025, 0.46].map(fog => makeHazeTexture(image, fog)),
+      textures: [0.025, 0.20, 0.34, 0.46].map(fog => makeHazeTexture(image, fog)),
       mesh: AnimalRig.create(SafariMotion.rigs[species]),
       age: 0,
       phase: Math.random() * Math.PI * 2,
@@ -176,15 +197,15 @@ function drawAnimal(animal, width, height, deltaTime) {
   animal.elapsed += deltaTime;
   SafariMotion.updateTempo(animal, deltaTime);
   const depth = animal.layer;
-  const scale = SafariMotion.rowScale(depth, width);
+  const scale = SafariMotion.animalScale(animal, width, height);
   const movement = 1; // Cadence already follows actual travel, including acceleration.
   const rig = SafariMotion.rigs[animal.species];
-  const distance = SafariMotion.travelDistance(animal, animals, width, deltaTime);
+  const distance = SafariMotion.travelDistance(animal, animals, width, deltaTime, height);
   animal.x += distance * animal.direction;
   // Match planted-foot motion to ground speed instead of a fixed timer.
   animal.gait += distance * animal.mesh.profile.stance / (animal.mesh.profile.stride * scale);
   const animalWidth = rig.width * scale;
-  const ground=JungleScene.groundY(width,height,depth,animal.x+animalWidth*.5,controlsHeight) + height*.008*animal.direction;
+  const ground=JungleScene.groundY(width,height,depth,animal.x+animalWidth*.5,controlsHeight);
   const y = ground - animal.footBaseline * scale;
 
   context.save();
@@ -206,7 +227,7 @@ function drawAnimal(animal, width, height, deltaTime) {
   AnimalRig.draw(context, animal.textures[depth], rig, animal.mesh, animal.gait, movement, animal.age, animal.phase, undefined, animal.footBaseline);
   context.restore();
 
-  const nextPass = SafariMotion.nextPass(animal, width);
+  const nextPass = SafariMotion.nextPass(animal, width, infiniteMode, height);
   if (nextPass) {
     Object.assign(animal, nextPass);
     if (!animal.dead) animal.waiting = true;
@@ -224,12 +245,13 @@ function drawFrame(now) {
   JungleScene.background(context, width, height, now, controlsHeight);
 
   // Each entry edge has its own FIFO queue on opposite sides of the same trail.
-  for (const layer of [0, 1]) for (const direction of [-1,1]) {
+  const layers = Array.from({ length: SafariMotion.rowCount }, (_, layer) => layer);
+  for (const layer of layers) for (const direction of [-1,1]) {
     const animal=animals.filter(entry=>entry.waiting&&entry.layer===layer&&entry.direction===direction)
       .sort((a,b)=>a.order-b.order)[0];
     if(animal&&layer===0) animal.entryFromQueue=animals.some(other=>other!==animal&&other.layer===0&&other.direction===direction&&!other.waiting&&!other.dead);
-    if(animal&&now>=animal.readyAt&&SafariMotion.canEnter(animal,animals,width)) {
-      animal.x=SafariMotion.entryPosition(animal,width);
+    if(animal&&now>=animal.readyAt&&SafariMotion.canEnter(animal,animals,width,height)) {
+      animal.x=SafariMotion.entryPosition(animal,width,height);
       animal.waiting=false;animal.hasEntered=true;
       animal.elapsed=animal.layer===0 ? 0 : 10;
       updateAnimalCount();
@@ -237,11 +259,11 @@ function drawFrame(now) {
   }
   animals.sort((a,b)=>b.layer-a.layer || a.direction-b.direction);
   // Snapshot membership: exiting animals must not draw twice in the same frame.
-  const rows = [0, 1].map((layer) => animals.filter((animal) => animal.layer === layer));
-  for (const layer of [1, 0]) {
+  const rows = layers.map((layer) => animals.filter((animal) => animal.layer === layer));
+  for (const layer of layers.slice().reverse()) {
     rows[layer].forEach((animal) => drawAnimal(animal, width, height, deltaTime));
     // Composite mist AFTER its animals, BEFORE the closer row.
-    if (layer > 0) drawMist(width, height, JungleScene.groundY(width,height,layer,width*.5,controlsHeight)/height, 0.30);
+    if (layer > 0) drawMist(width, height, JungleScene.groundY(width,height,layer,width*.5,controlsHeight)/height, [0, 0.09, 0.14, 0.18][layer]);
   }
   JungleScene.foreground(context, width, height, now, controlsHeight);
 

@@ -12,7 +12,7 @@ assert.equal(motion.pace(3.5), 1);
 for (const species of Object.keys(motion.rigs)) {
   const width = 900;
   for (const direction of [-1, 1]) {
-    for (const layer of [0, 1]) {
+    for (let layer = 0; layer < motion.rowCount; layer++) {
       const animalWidth = motion.rigs[species].width * motion.rowScale(layer, width);
       const animal = { species, direction, layer, x: direction === 1 ? width - 1 : 1 - animalWidth, age: 9999 };
       assert.equal(motion.nextPass(animal, width), null, 'visible animals must stay in their row regardless of age');
@@ -30,7 +30,7 @@ for (const species of Object.keys(motion.rigs)) {
     }
   }
 }
-assert.equal(motion.rowCount,2,'there is only one background walking row');
+assert.equal(motion.rowCount,4,'front trail plus three background trails');
 const start = motion.footstep(0, 50, 15);
 const stance = motion.footstep(0.31, 50, 15);
 assert.equal(start.lift, 0);
@@ -40,7 +40,7 @@ assert.ok(motion.footstep(.86, 50, 15).lift > 14, 'foot lifts during recovery');
 assert.deepEqual(motion.footstep(1, 50, 15), start);
 console.log('Motion tests passed');
 
-for (const layer of [0, 1]) {
+for (let layer = 0; layer < motion.rowCount; layer++) {
   for (const species of Object.keys(motion.rigs)) {
     const arrival = { species, layer, waiting: true };
     assert.ok(motion.canEnter(arrival, [], 900));
@@ -55,8 +55,8 @@ for (const layer of [0, 1]) {
 console.log('Arrival spacing tests passed');
 
 for (const species of Object.keys(motion.rigs)) {
-  assert.ok(motion.preferredSpeed(species, 0) > 32);
-  assert.ok(motion.preferredSpeed(species, 1) < 39, 'variation stays subtle');
+  assert.ok(motion.preferredSpeed(species, 0) > 27);
+  assert.ok(motion.preferredSpeed(species, 1) < 33, 'walking is 15% slower with subtle species variation');
 }
 assert.ok(motion.preferredSpeed('monkey') > motion.preferredSpeed('zebra'));
 assert.ok(motion.preferredSpeed('zebra') > motion.preferredSpeed('lion'));
@@ -97,7 +97,7 @@ for(const width of [450,900,1500]) for(const species of Object.keys(motion.rigs)
     const dt=1/60;leader.elapsed+=dt;
     leader.x+=motion.travelDistance(leader,[leader],width,dt);seconds+=dt;
   }
-  assert.ok(seconds<4,`${species} starts entering promptly at ${width}px (${seconds.toFixed(2)}s)`);
+  assert.ok(seconds<5,`${species} starts entering promptly at ${width}px (${seconds.toFixed(2)}s)`);
   const right=motion.entryPosition(next,width)+motion.rigs[species].width*motion.rowScale(0,width);
   assert.ok(right<width*.15+24,'only the leading portion enters initially');
   assert.ok(leader.x-right>=Math.max(28,width*.035),'admission keeps a safe gap');
@@ -140,3 +140,44 @@ assert.equal(motion.canEnter(rearArrival,rearCrowd,900),false,'background row is
 rearCrowd[0].dead=true;
 assert.ok(motion.canEnter(rearArrival,rearCrowd,900),'background queue resumes when an animal finishes');
 console.log('Background crowd limit passed');
+
+for (const direction of [-1, 1]) for (const size of [.7, 1.3]) {
+  for (const species of Object.keys(motion.rigs)) {
+    let animal = { species, layer: 0, direction, startDirection: direction, size, hasEntered: true };
+    for (let pass = 0; pass < motion.rowCount * 3; pass++) {
+      const scale = motion.animalScale(animal, 1920, 540);
+      const bodyWidth = motion.rigs[species].width * scale;
+      animal.x = animal.direction === 1 ? 1920 + 79 * scale : -bodyWidth - 79 * scale;
+      assert.equal(motion.nextPass(animal, 1920, true, 540), null, 'wait until the animated extremities are offscreen');
+      animal.x = animal.direction === 1 ? 1920 + 81 * scale : -bodyWidth - 81 * scale;
+      const next = motion.nextPass(animal, 1920, true, 540);
+      assert.equal(next.layer, (pass + 1) % motion.rowCount);
+      if (next.layer === 0) assert.equal(next.direction, direction, 'loop returns to the original side');
+      animal = { ...animal, ...next };
+      assert.equal(animal.size, size, 'individual size remains constant between passes');
+      const entry = motion.entryPosition(animal, 1920, 540);
+      const nextWidth = motion.rigs[species].width * motion.animalScale(animal, 1920, 540);
+      assert.ok(animal.direction === 1 ? entry + nextWidth < 0 : entry > 1920, 'repeat entries begin entirely offscreen');
+    }
+    animal.layer = motion.rowCount - 1;
+    animal.x = animal.direction === 1 ? 3000 : -3000;
+    assert.deepEqual(motion.nextPass(animal, 1920, false, 540), { dead: true }, 'disabling infinite mode takes effect at the final exit');
+  }
+}
+for (const random of [() => 0, () => 1]) {
+  const size = motion.arrivalPlan(0, 0, random).size;
+  assert.ok(size >= .7 && size <= 1.3, 'size varies by at most 30%');
+}
+for (const direction of [-1, 1]) {
+  const follower = { species: 'giraffe', layer: 0, direction, size: 1.3, x: 500, speed: 31, elapsed: 10 };
+  const leader = { species: 'elephant', layer: 0, direction, size: .7 };
+  leader.x = direction === 1
+    ? follower.x + motion.rigs.giraffe.width * motion.animalScale(follower, 1280, 720) + 90
+    : follower.x - motion.rigs.elephant.width * motion.animalScale(leader, 1280, 720) - 90;
+  for (let i = 0; i < 2000; i++) follower.x += direction * motion.travelDistance(follower, [follower, leader], 1280, .05, 720);
+  const gap = direction === 1
+    ? leader.x - follower.x - motion.rigs.giraffe.width * motion.animalScale(follower, 1280, 720)
+    : follower.x - leader.x - motion.rigs.elephant.width * motion.animalScale(leader, 1280, 720);
+  assert.ok(gap >= 1280 * .035 - 1e-6, 'different individual sizes retain safe following gaps');
+}
+console.log('Four-row lifecycle, repeated loops, size extremes and mixed-size spacing passed');

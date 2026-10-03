@@ -16,7 +16,7 @@
       eyes: [[435,451,15,23],[566,433,13,21]], blinkPeriod: 5.7 },
     giraffe: { stride: 60, lift: 28, stance: .72, crouch: 12, skinFalloff: 0.24, phases: [0,.5,.25], bob: 3,
       head: [566,337,200,230,429,631], nod: .025, headBob: 4, headRate: .5,
-      tail: [188,685,102,76,277,657], tailAngle: .145, tailRate: 1.05,
+      tail: [172,628,88,70,251,592], tailAngle: .145, tailRate: 1.05, tailBodyEdge: [225,260],
       eyes: [[549,350,15,23],[656,319,12,20]], blinkPeriod: 6.2 },
     lion: { stride: 54, lift: 24, stance: .72, crouch: 12, skinFalloff: 0.28, phases: [0,.5,.25], bob: 3,
       head: [508,450,235,249,449,627], nod: .035, headBob: 4, headRate: 1,
@@ -176,7 +176,8 @@
       dy+=bodyAt(lx)*v.body*(1-Math.min(1,total));
       const head=rotate(profile.head,lx,ly,nod,v.head);
       dx+=head.x; dy+=head.y-Math.sin(gait*TAU)*profile.headBob*movement*v.head;
-      const tailWeight=v.tail*(profile.tailFloor ? 1-motion.smooth((ly-profile.tailFloor+50)/50) : 1);
+      const tailWeight=v.tail*(profile.tailFloor ? 1-motion.smooth((ly-profile.tailFloor+50)/50) : 1)
+        * (profile.tailBodyEdge ? 1-motion.smooth((lx-profile.tailBodyEdge[0])/(profile.tailBodyEdge[1]-profile.tailBodyEdge[0])) : 1);
       // The tip follows the root with a small delay and a larger arc. Rotate
       // around the attachment point so the tail stays connected to the body.
       if (tailWeight>0) {

@@ -60,10 +60,10 @@ a slow breeze; background animation freezes for reduced-motion preferences.
 All animals, including saved drawings after a refresh, start on the front row from either side. Gaps vary with scan pressure. After exiting fully offscreen, animals take one smaller, hazier background pass, with at most three active background animals. Their bodies remain opaque.
 
 The front trail sits low on TV screens, with clearance based on the measured
-control height. Select **Jungle sounds** once on the display to start the looping
-ambience, then adjust **Volume** (default 30%). The slider remembers its level;
-playback starts off on each page load so the TV browser can authorize audio from
-your click. Select the sound button again to stop it. The recording is a local
+control height. Jungle ambience starts automatically on the display; adjust
+**Volume** (default 30%) with the slider, which remembers its level. If the
+browser blocks autoplay, tap the display or press a key to enable sound.
+Select the sound button to stop it. The recording is a local
 CC0 asset, with source and license details in `public/audio/CREDITS.md`.
 
 The new artwork has a version identifier. Refresh old capture/display tabs before
